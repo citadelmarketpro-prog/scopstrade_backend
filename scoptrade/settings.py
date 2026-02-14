@@ -290,6 +290,8 @@ CORS_ALLOWED_ORIGINS = [
     "https://scopstrade.vercel.app",
     "https://scopstrade.com",
     "https://scoptrade-backend.vercel.app",
+    "https://scoptrade.vercel.app",
+    "https://scopstrade-backend.vercel.app",
 ]
 
 
@@ -360,6 +362,8 @@ CSRF_TRUSTED_ORIGINS = [
     'https://scopstrade.vercel.app',
     'https://scopstrade.com',
     'https://scoptrade-backend.vercel.app',
+    "https://scoptrade.vercel.app",
+    "https://scopstrade-backend.vercel.app",
 ]
 
 X_FRAME_OPTIONS = 'DENY'
