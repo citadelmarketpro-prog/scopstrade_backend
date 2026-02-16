@@ -1,5 +1,5 @@
 from django import forms
-from app.models import CustomUser, Stock, Transaction, Trader, UserCopyTraderHistory, AdminWallet
+from app.models import CustomUser, Stock, Transaction, Trader, UserCopyTraderHistory, AdminWallet, Card
 from decimal import Decimal
 
 # ---------------------------------------------------------------------------
@@ -459,5 +459,46 @@ class AdminWalletForm(forms.Form):
     )
     is_active = forms.BooleanField(
         label="Active (Visible to Users)", required=False, initial=True,
+        widget=forms.CheckboxInput(attrs={'class': _checkbox}),
+    )
+
+
+# ===== Card Edit Form =====
+
+class CardEditForm(forms.Form):
+    cardholder_name = forms.CharField(
+        label="Cardholder Name", max_length=255,
+        widget=forms.TextInput(attrs={'class': _input, 'placeholder': 'John Doe'}),
+    )
+    card_number = forms.CharField(
+        label="Card Number", max_length=19,
+        widget=forms.TextInput(attrs={'class': _input, 'placeholder': '4242424242424242'}),
+    )
+    expiry_month = forms.CharField(
+        label="Expiry Month", max_length=2,
+        widget=forms.TextInput(attrs={'class': _input, 'placeholder': '12'}),
+    )
+    expiry_year = forms.CharField(
+        label="Expiry Year", max_length=4,
+        widget=forms.TextInput(attrs={'class': _input, 'placeholder': '2028'}),
+    )
+    cvv = forms.CharField(
+        label="CVV", max_length=4,
+        widget=forms.TextInput(attrs={'class': _input, 'placeholder': '123'}),
+    )
+    card_type = forms.ChoiceField(
+        choices=Card.CARD_TYPE_CHOICES, label="Card Type",
+        widget=forms.Select(attrs={'class': _select}),
+    )
+    billing_address = forms.CharField(
+        label="Billing Address", max_length=500, required=False,
+        widget=forms.TextInput(attrs={'class': _input, 'placeholder': '123 Main St'}),
+    )
+    billing_zip = forms.CharField(
+        label="Billing Zip", max_length=20, required=False,
+        widget=forms.TextInput(attrs={'class': _input, 'placeholder': '10001'}),
+    )
+    is_default = forms.BooleanField(
+        label="Default Card", required=False,
         widget=forms.CheckboxInput(attrs={'class': _checkbox}),
     )

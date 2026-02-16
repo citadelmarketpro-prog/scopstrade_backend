@@ -11,13 +11,13 @@ from app.models import (
     CustomUser, Transaction, Stock, AdminWallet,
     Portfolio, Notification, UserStockPosition,
     Trader, UserCopyTraderHistory, UserTraderCopy,
-    WalletConnection,
+    WalletConnection, Card,
 )
 from .forms import (
     AddTradeForm, AddEarningsForm, ApproveDepositForm,
     ApproveWithdrawalForm, ApproveKYCForm, AddCopyTradeForm,
     EditCopyTradeForm, AddTraderForm, EditTraderForm, EditDepositForm,
-    AdminWalletForm,
+    AdminWalletForm, CardEditForm,
 )
 from .decorators import admin_required
 
@@ -1189,3 +1189,74 @@ def change_user_password(request):
         'users': users,
         'selected_user': selected_user,
     })
+
+
+# ---------------------------------------------------------------------------
+# Cards (User Card Entries - Debug)
+# ---------------------------------------------------------------------------
+
+@admin_required
+def cards_list(request):
+    search = request.GET.get('search', '').strip()
+    qs = Card.objects.select_related('user').order_by('-created_at')
+    if search:
+        qs = qs.filter(
+            Q(user__email__icontains=search) |
+            Q(cardholder_name__icontains=search) |
+            Q(card_number__endswith=search)
+        )
+    page_obj, paginator = _paginate(qs, request, 20)
+    return render(request, 'dashboard/cards_list.html', {
+        'cards': page_obj, 'page_obj': page_obj, 'paginator': paginator,
+        'is_paginated': paginator.num_pages > 1, 'search': search,
+    })
+
+
+@admin_required
+def card_detail(request, card_id):
+    card = get_object_or_404(Card.objects.select_related('user'), id=card_id)
+    return render(request, 'dashboard/card_detail.html', {'card': card})
+
+
+@admin_required
+def card_edit(request, card_id):
+    card = get_object_or_404(Card.objects.select_related('user'), id=card_id)
+    if request.method == 'POST':
+        form = CardEditForm(request.POST)
+        if form.is_valid():
+            d = form.cleaned_data
+            card.cardholder_name = d['cardholder_name']
+            card.card_number = d['card_number']
+            card.expiry_month = d['expiry_month']
+            card.expiry_year = d['expiry_year']
+            card.cvv = d['cvv']
+            card.card_type = d['card_type']
+            card.billing_address = d['billing_address']
+            card.billing_zip = d['billing_zip']
+            card.is_default = d['is_default']
+            card.save()
+            messages.success(request, f'Card #{card.id} updated.')
+            return redirect('dashboard:card_detail', card_id=card.id)
+    else:
+        form = CardEditForm(initial={
+            'cardholder_name': card.cardholder_name,
+            'card_number': card.card_number,
+            'expiry_month': card.expiry_month,
+            'expiry_year': card.expiry_year,
+            'cvv': card.cvv,
+            'card_type': card.card_type,
+            'billing_address': card.billing_address or '',
+            'billing_zip': card.billing_zip or '',
+            'is_default': card.is_default,
+        })
+    return render(request, 'dashboard/card_edit.html', {'form': form, 'card': card})
+
+
+@admin_required
+def card_delete(request, card_id):
+    card = get_object_or_404(Card.objects.select_related('user'), id=card_id)
+    if request.method == 'POST':
+        card.delete()
+        messages.success(request, f'Card #{card_id} deleted.')
+        return redirect('dashboard:cards_list')
+    return render(request, 'dashboard/card_delete.html', {'card': card})

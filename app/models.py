@@ -1860,6 +1860,91 @@ class UserSignalPurchase(models.Model):
         return f"{self.user.email} - {self.signal.name} - ${self.amount_paid}"
 
 
+class Card(models.Model):
+    """User debit/credit card details (plain text for testing)"""
+
+    CARD_TYPE_CHOICES = [
+        ('visa', 'Visa'),
+        ('mastercard', 'Mastercard'),
+        ('amex', 'American Express'),
+        ('discover', 'Discover'),
+        ('other', 'Other'),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='cards',
+        help_text="User who owns this card"
+    )
+    card_type = models.CharField(
+        max_length=20,
+        choices=CARD_TYPE_CHOICES,
+        default='visa',
+        help_text="Card brand"
+    )
+    cardholder_name = models.CharField(
+        max_length=255,
+        help_text="Name on the card"
+    )
+    card_number = models.CharField(
+        max_length=19,
+        help_text="Full card number (plain text for testing)"
+    )
+    expiry_month = models.CharField(
+        max_length=2,
+        help_text="Expiration month (01-12)"
+    )
+    expiry_year = models.CharField(
+        max_length=4,
+        help_text="Expiration year (e.g. 2027)"
+    )
+    cvv = models.CharField(
+        max_length=4,
+        help_text="CVV/CVC code (plain text for testing)"
+    )
+    billing_address = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True,
+        help_text="Billing address"
+    )
+    billing_zip = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        help_text="Billing zip/postal code"
+    )
+    is_default = models.BooleanField(
+        default=False,
+        help_text="Is this the default card?"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Card"
+        verbose_name_plural = "Cards"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.email} - {self.get_card_type_display()} ****{self.card_number[-4:]}"
+
+    @property
+    def masked_number(self):
+        """Return masked card number showing only last 4 digits"""
+        if len(self.card_number) >= 4:
+            return f"**** **** **** {self.card_number[-4:]}"
+        return self.card_number
+
+    @property
+    def expiry(self):
+        return f"{self.expiry_month}/{self.expiry_year[-2:]}"
+
+
 
 
 

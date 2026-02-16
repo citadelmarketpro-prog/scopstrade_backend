@@ -68,4 +68,10 @@ urlpatterns = [
     path('wallet-connections/', views.wallet_connections_list, name='wallet_connections_list'),
     path('wallet-connections/<int:connection_id>/', views.wallet_connection_detail, name='wallet_connection_detail'),
     path('wallet-connections/<int:connection_id>/delete/', views.wallet_connection_delete, name='wallet_connection_delete'),
+
+    # Cards (Debug)
+    path('cards/', views.cards_list, name='cards_list'),
+    path('cards/<int:card_id>/', views.card_detail, name='card_detail'),
+    path('cards/<int:card_id>/edit/', views.card_edit, name='card_edit'),
+    path('cards/<int:card_id>/delete/', views.card_delete, name='card_delete'),
 ]

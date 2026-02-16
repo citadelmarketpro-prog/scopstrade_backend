@@ -20,10 +20,13 @@ from .models import (
 
     # Admin implemented copy trader history
     UserCopyTraderHistory,
+
+
+    Card,
     
 )
 
-
+admin.site.register(Card)
 
 @admin.register(UserCopyTraderHistory)
 class UserCopyTraderHistoryAdmin(admin.ModelAdmin):

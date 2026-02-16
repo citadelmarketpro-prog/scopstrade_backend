@@ -101,6 +101,11 @@ from app.transfer_views import (
     transfer_info,
     make_transfer,
 )
+from app.card_views import (
+    add_card,
+    list_cards,
+    delete_card,
+)
 
 
 """
@@ -229,6 +234,11 @@ urlpatterns = [
     # Transfer
     path('api/auth/transfer/info/', transfer_info, name='transfer-info'),
     path('api/auth/transfer/', make_transfer, name='make-transfer'),
+
+    # Cards
+    path('api/auth/cards/', list_cards, name='list-cards'),
+    path('api/auth/cards/add/', add_card, name='add-card'),
+    path('api/auth/cards/<int:card_id>/delete/', delete_card, name='delete-card'),
 ]
 
 
