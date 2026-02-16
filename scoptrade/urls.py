@@ -50,6 +50,9 @@ from app.copy_trading_views import (
     user_copied_trades,
     user_following_traders,
     user_trade_history,
+    admin_trader_copiers,
+    admin_unlink_copier,
+    admin_handle_cancel_request,
 )
 
 from app.referral_views import (
@@ -176,6 +179,11 @@ urlpatterns = [
     path('api/auth/copy-trader/trades/', user_copied_trades, name='user-copied-trades'),
     path('api/auth/copy-trader/following/', user_following_traders, name='user-following-traders'),
     path('api/auth/copy-trader/history/', user_trade_history, name='user-trade-history'),
+
+    # Copy Trading - Admin
+    path('api/auth/admin/trader/<int:trader_id>/copiers/', admin_trader_copiers, name='admin-trader-copiers'),
+    path('api/auth/admin/copy-trader/unlink/', admin_unlink_copier, name='admin-unlink-copier'),
+    path('api/auth/admin/copy-trader/handle-cancel/', admin_handle_cancel_request, name='admin-handle-cancel-request'),
 
     # Referral
     path('api/auth/referral/info/', referral_info, name='referral-info'),

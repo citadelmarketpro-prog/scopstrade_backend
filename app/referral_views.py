@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Sum, Q
+from django.conf import settings
 import secrets
 import string
 from .models import CustomUser, Transaction
@@ -33,8 +34,8 @@ def referral_info(request):
         user.referral_code = generate_unique_referral_code()
         user.save(update_fields=['referral_code'])
 
-    # Build referral link - get frontend URL from header or use default
-    frontend_url = request.headers.get('X-Frontend-URL', 'http://localhost:3000')
+    # Build referral link - get frontend URL from header or use settings
+    frontend_url = request.headers.get('X-Frontend-URL', settings.FRONTEND_URL)
     referral_link = f"{frontend_url}/register?ref={user.referral_code}"
 
     # Get total referrals count
@@ -132,7 +133,7 @@ def generate_referral_code(request):
     user.save(update_fields=['referral_code'])
 
     # Build referral link
-    frontend_url = request.headers.get('X-Frontend-URL', 'http://localhost:3000')
+    frontend_url = request.headers.get('X-Frontend-URL', settings.FRONTEND_URL)
     referral_link = f"{frontend_url}/register?ref={new_code}"
 
     message = "Referral code generated successfully!" if not old_code else "Referral code regenerated successfully!"

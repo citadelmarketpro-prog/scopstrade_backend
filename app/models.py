@@ -55,6 +55,121 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     ]
 
     # KYC Fields
+    title = models.CharField(
+        max_length=10,
+        blank=True,
+        null=True,
+        choices=[
+            ("mr", "Mr."),
+            ("mrs", "Mrs."),
+            ("ms", "Ms."),
+            ("dr", "Dr."),
+            ("prof", "Prof."),
+        ],
+        help_text="Title (Mr., Mrs., Ms., etc.)"
+    )
+
+    status_of_employment = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        choices=[
+            ("employed", "Employed"),
+            ("self_employed", "Self-Employed"),
+            ("unemployed", "Unemployed"),
+            ("student", "Student"),
+            ("retired", "Retired"),
+        ],
+        help_text="Employment status"
+    )
+
+    source_of_income = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        choices=[
+            ("salary", "Salary"),
+            ("business", "Business"),
+            ("investments", "Investments"),
+            ("pension", "Pension"),
+            ("savings", "Savings"),
+            ("inheritance", "Inheritance"),
+            ("other", "Other"),
+        ],
+        help_text="Primary source of income"
+    )
+
+    industry = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        choices=[
+            ("technology", "Technology"),
+            ("finance", "Finance"),
+            ("healthcare", "Healthcare"),
+            ("education", "Education"),
+            ("retail", "Retail"),
+            ("manufacturing", "Manufacturing"),
+            ("construction", "Construction"),
+            ("agriculture", "Agriculture"),
+            ("hospitality", "Hospitality"),
+            ("transportation", "Transportation"),
+            ("real_estate", "Real Estate"),
+            ("legal", "Legal"),
+            ("media", "Media & Entertainment"),
+            ("government", "Government"),
+            ("non_profit", "Non-Profit"),
+            ("other", "Other"),
+        ],
+        help_text="Industry of employment"
+    )
+
+    level_of_education = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        choices=[
+            ("high_school", "High School"),
+            ("associate", "Associate Degree"),
+            ("bachelor", "Bachelor's Degree"),
+            ("master", "Master's Degree"),
+            ("doctorate", "Doctorate"),
+            ("other", "Other"),
+        ],
+        help_text="Highest level of education"
+    )
+
+    annual_amount = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        choices=[
+            ("0-15k", "Up to $15,000"),
+            ("15k-50k", "$15,000 - $50,000"),
+            ("50k-200k", "$50,000 - $200,000"),
+            ("200k-500k", "$200,000 - $500,000"),
+            ("500k-1m", "$500,000 - $1,000,000"),
+            ("1m-3m", "$1,000,000 - $3,000,000"),
+            ("3m+", "Over $3,000,000"),
+        ],
+        help_text="Annual income (USD)"
+    )
+
+    estimated_net_worth = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        choices=[
+            ("0-50k", "Up to $50,000"),
+            ("50k-100k", "$50,000 - $100,000"),
+            ("100k-500k", "$100,000 - $500,000"),
+            ("500k-1m", "$500,000 - $1,000,000"),
+            ("1m-5m", "$1,000,000 - $5,000,000"),
+            ("5m+", "Over $5,000,000"),
+        ],
+        help_text="Estimated net worth (USD)"
+    )
+
     id_type = models.CharField(
         max_length=50,
         blank=True,
@@ -67,7 +182,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         ],
         help_text="Select the type of ID provided",
     )
-    
+
     id_front = CloudinaryField("image", blank=True, null=True, help_text="Front side of ID document")
     id_back = CloudinaryField("image", blank=True, null=True, help_text="Back side of ID document")
     is_verified = models.BooleanField(default=False)
@@ -836,7 +951,16 @@ class UserTraderCopy(models.Model):
         blank=True,
         help_text="When the user manually stopped copying (if applicable)"
     )
-    
+    cancel_requested = models.BooleanField(
+        default=False,
+        help_text="Whether user has requested to cancel copying (pending admin approval)"
+    )
+    cancel_requested_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When the cancel request was made"
+    )
+
     class Meta:
         verbose_name = "User Trader Copy"
         verbose_name_plural = "User Trader Copies"

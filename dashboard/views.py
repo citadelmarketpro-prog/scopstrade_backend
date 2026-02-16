@@ -670,42 +670,73 @@ def traders_list(request):
 
 
 def _build_trader_data(form):
-    """Extract cleaned trader field values from form, handling dropdown/custom logic."""
+    """Extract cleaned trader field values from form."""
+    import json
     d = form.cleaned_data
-    capital = _pick(d.get('capital'), d.get('capital_dropdown'), '0')
-    gain = _pick(d.get('gain'), d.get('gain_dropdown'), Decimal('0.00'))
-    if isinstance(gain, str):
-        gain = Decimal(gain)
-    avg_profit = _pick(d.get('avg_profit_percent'), d.get('avg_profit_dropdown'), Decimal('0.00'))
-    if isinstance(avg_profit, str):
-        avg_profit = Decimal(avg_profit)
-    avg_loss = _pick(d.get('avg_loss_percent'), d.get('avg_loss_dropdown'), Decimal('0.00'))
-    if isinstance(avg_loss, str):
-        avg_loss = Decimal(avg_loss)
-    wins = _pick(d.get('total_wins'), d.get('total_wins_dropdown'), 0)
-    if isinstance(wins, str):
-        wins = int(wins)
-    losses = _pick(d.get('total_losses'), d.get('total_losses_dropdown'), 0)
-    if isinstance(losses, str):
-        losses = int(losses)
-    copiers = _resolve_range(d.get('copiers'), d.get('copiers_range'), _COPIERS_MAP)
-    trades = _resolve_range(d.get('trades'), d.get('trades_range'), _TRADES_MAP)
-    subscribers = _resolve_range(d.get('subscribers'), d.get('subscribers_range'), _SUBS_MAP)
-    positions = _resolve_range(d.get('current_positions'), d.get('current_positions_range'), _POS_MAP)
-    expert = Decimal(d['expert_rating']) if d.get('expert_rating') else Decimal('5.00')
+
+    # Helper to parse JSON fields safely
+    def parse_json(value, default):
+        if not value or not value.strip():
+            return default
+        try:
+            return json.loads(value)
+        except (json.JSONDecodeError, TypeError):
+            return default
+
     return {
-        'name': d['name'], 'username': d['username'], 'country': d['country'], 'badge': d['badge'],
-        'capital': capital, 'gain': gain, 'risk': int(d['risk']),
-        'copiers': copiers, 'trades': trades, 'avg_trade_time': d['avg_trade_time'],
-        'avg_profit_percent': avg_profit, 'avg_loss_percent': avg_loss,
-        'total_wins': wins, 'total_losses': losses,
-        'subscribers': subscribers, 'current_positions': positions, 'expert_rating': expert,
+        # Basic Info
+        'name': d['name'],
+        'username': d['username'],
+        'country': d['country'],
+        'badge': d['badge'],
+        'bio': d.get('bio', ''),
+        'category': d['category'],
+        'trend_direction': d['trend_direction'],
+
+        # Trading Stats
+        'capital': d['capital'],
+        'gain': d['gain'],
+        'risk': int(d['risk']),
+        'copiers': d['copiers'],
+        'trades': d['trades'],
+        'avg_trade_time': d['avg_trade_time'],
+
+        # Performance Stats
+        'avg_profit_percent': d['avg_profit_percent'],
+        'avg_loss_percent': d['avg_loss_percent'],
+        'total_wins': d['total_wins'],
+        'total_losses': d['total_losses'],
+
+        # Additional Stats
+        'subscribers': d.get('subscribers') or 0,
+        'followers': d.get('followers') or 0,
+        'current_positions': d.get('current_positions') or 0,
+        'expert_rating': d.get('expert_rating') or Decimal('5.00'),
+
+        # Performance Metrics
         'return_ytd': d.get('return_ytd') or Decimal('0.00'),
+        'return_2y': d.get('return_2y') or Decimal('0.00'),
         'avg_score_7d': d.get('avg_score_7d') or Decimal('0.00'),
         'profitable_weeks': d.get('profitable_weeks') or Decimal('0.00'),
         'min_account_threshold': d.get('min_account_threshold') or Decimal('0.00'),
+        'trading_days': d.get('trading_days', '0'),
+        'total_trades_12m': d.get('total_trades_12m') or 0,
+
+        # Advanced Stats
+        'max_drawdown': d.get('max_drawdown') or Decimal('0.00'),
+        'cumulative_earnings_copiers': d.get('cumulative_earnings_copiers') or Decimal('0.00'),
+        'cumulative_copiers': d.get('cumulative_copiers') or 0,
+
+        # JSON Fields
+        'tags': parse_json(d.get('tags'), []),
+        'portfolio_breakdown': parse_json(d.get('portfolio_breakdown'), []),
+        'top_traded': parse_json(d.get('top_traded'), []),
+        'performance_data': parse_json(d.get('performance_data'), []),
+        'monthly_performance': parse_json(d.get('monthly_performance'), []),
+        'frequently_traded': parse_json(d.get('frequently_traded'), []),
+
+        # Status
         'is_active': d.get('is_active', True),
-        'total_trades_12m': trades,
     }
 
 
@@ -715,7 +746,11 @@ def add_trader(request):
         form = AddTraderForm(request.POST, request.FILES)
         if form.is_valid():
             data = _build_trader_data(form)
-            data['avatar'] = form.cleaned_data.get('avatar')
+            # Handle file uploads
+            if form.cleaned_data.get('avatar'):
+                data['avatar'] = form.cleaned_data['avatar']
+            if form.cleaned_data.get('country_flag'):
+                data['country_flag'] = form.cleaned_data['country_flag']
             trader = Trader.objects.create(**data)
             messages.success(request, f'Trader "{trader.name}" added successfully!')
             return redirect('dashboard:traders_list')
@@ -732,43 +767,201 @@ def trader_detail(request, trader_id):
     open_trades = all_ct.filter(status='open').count()
     closed_trades = all_ct.filter(status='closed').count()
     copy_trades = all_ct[:10]
-    copying_users = UserTraderCopy.objects.filter(trader=trader, is_actively_copying=True).select_related('user')
+
+    # Active copiers (no cancel request)
+    active_copiers = UserTraderCopy.objects.filter(
+        trader=trader,
+        is_actively_copying=True,
+        cancel_requested=False
+    ).select_related('user').order_by('-started_copying_at')
+
+    # Cancel requests
+    cancel_requests = UserTraderCopy.objects.filter(
+        trader=trader,
+        is_actively_copying=True,
+        cancel_requested=True
+    ).select_related('user').order_by('-cancel_requested_at')
+
     return render(request, 'dashboard/trader_detail.html', {
-        'trader': trader, 'copy_trades': copy_trades, 'copying_users': copying_users,
-        'total_copying_users': copying_users.count(),
+        'trader': trader, 'copy_trades': copy_trades,
+        'active_copiers': active_copiers,
+        'cancel_requests': cancel_requests,
+        'total_copying_users': active_copiers.count() + cancel_requests.count(),
         'total_trades': total_trades, 'open_trades': open_trades, 'closed_trades': closed_trades,
     })
 
 
 @admin_required
 def edit_trader(request, trader_id):
+    import json
     trader = get_object_or_404(Trader, id=trader_id)
+
     if request.method == 'POST':
         form = EditTraderForm(request.POST, request.FILES)
         if form.is_valid():
             data = _build_trader_data(form)
             for key, val in data.items():
                 setattr(trader, key, val)
+            # Handle file uploads
             if form.cleaned_data.get('avatar'):
                 trader.avatar = form.cleaned_data['avatar']
+            if form.cleaned_data.get('country_flag'):
+                trader.country_flag = form.cleaned_data['country_flag']
             trader.save()
             messages.success(request, f'Trader "{trader.name}" updated successfully!')
             return redirect('dashboard:trader_detail', trader_id=trader.id)
     else:
         form = EditTraderForm(initial={
-            'name': trader.name, 'username': trader.username, 'country': trader.country,
-            'badge': trader.badge, 'capital': trader.capital, 'gain': trader.gain,
-            'risk': str(trader.risk), 'avg_trade_time': trader.avg_trade_time,
-            'copiers': trader.copiers, 'trades': trader.trades,
-            'avg_profit_percent': trader.avg_profit_percent, 'avg_loss_percent': trader.avg_loss_percent,
-            'total_wins': trader.total_wins, 'total_losses': trader.total_losses,
-            'subscribers': trader.subscribers, 'current_positions': trader.current_positions,
+            # Basic Info
+            'name': trader.name,
+            'username': trader.username,
+            'country': trader.country,
+            'badge': trader.badge,
+            'bio': trader.bio,
+            'category': trader.category,
+            'trend_direction': trader.trend_direction,
+
+            # Trading Stats
+            'capital': trader.capital,
+            'gain': trader.gain,
+            'risk': str(trader.risk),
+            'avg_trade_time': trader.avg_trade_time,
+            'copiers': trader.copiers,
+            'trades': trader.trades,
+
+            # Performance Stats
+            'avg_profit_percent': trader.avg_profit_percent,
+            'avg_loss_percent': trader.avg_loss_percent,
+            'total_wins': trader.total_wins,
+            'total_losses': trader.total_losses,
+
+            # Additional Stats
+            'subscribers': trader.subscribers,
+            'followers': trader.followers,
+            'current_positions': trader.current_positions,
             'expert_rating': str(float(trader.expert_rating)),
-            'return_ytd': trader.return_ytd, 'avg_score_7d': trader.avg_score_7d,
-            'profitable_weeks': trader.profitable_weeks, 'min_account_threshold': trader.min_account_threshold,
+
+            # Performance Metrics
+            'return_ytd': trader.return_ytd,
+            'return_2y': trader.return_2y,
+            'avg_score_7d': trader.avg_score_7d,
+            'profitable_weeks': trader.profitable_weeks,
+            'min_account_threshold': trader.min_account_threshold,
+            'trading_days': trader.trading_days,
+            'total_trades_12m': trader.total_trades_12m,
+
+            # Advanced Stats
+            'max_drawdown': trader.max_drawdown,
+            'cumulative_earnings_copiers': trader.cumulative_earnings_copiers,
+            'cumulative_copiers': trader.cumulative_copiers,
+
+            # JSON Fields - serialize to strings
+            'tags': json.dumps(trader.tags) if trader.tags else '',
+            'portfolio_breakdown': json.dumps(trader.portfolio_breakdown) if trader.portfolio_breakdown else '',
+            'top_traded': json.dumps(trader.top_traded) if trader.top_traded else '',
+            'performance_data': json.dumps(trader.performance_data) if trader.performance_data else '',
+            'monthly_performance': json.dumps(trader.monthly_performance) if trader.monthly_performance else '',
+            'frequently_traded': json.dumps(trader.frequently_traded) if trader.frequently_traded else '',
+
+            # Status
             'is_active': trader.is_active,
         })
     return render(request, 'dashboard/edit_trader.html', {'form': form, 'trader': trader})
+
+
+@admin_required
+def unlink_copier(request, copy_id):
+    """Admin manually unlinks a user from a trader"""
+    copy_record = get_object_or_404(UserTraderCopy, id=copy_id)
+    trader = copy_record.trader
+    user = copy_record.user
+
+    if request.method == 'POST':
+        # Unlink the user
+        copy_record.is_actively_copying = False
+        copy_record.stopped_copying_at = timezone.now()
+        copy_record.save()
+
+        # Decrease copier count
+        if trader.copiers > 0:
+            trader.copiers -= 1
+            trader.save()
+
+        # Send notification to user
+        Notification.objects.create(
+            user=user,
+            type="copy_trader",
+            title="Trader Unlinked",
+            message=f"You have been unlinked from {trader.name}.",
+            full_details=f"Your copy relationship with {trader.name} has been terminated.",
+        )
+
+        messages.success(request, f'Successfully unlinked {user.email} from {trader.name}.')
+        return redirect('dashboard:trader_detail', trader_id=trader.id)
+
+    return render(request, 'dashboard/confirm_unlink.html', {
+        'copy_record': copy_record,
+        'trader': trader,
+        'user': user,
+    })
+
+
+@admin_required
+def handle_cancel_request(request, copy_id, action):
+    """Admin accepts or rejects a cancel request"""
+    if action not in ['accept', 'reject']:
+        messages.error(request, 'Invalid action.')
+        return redirect('dashboard:traders_list')
+
+    copy_record = get_object_or_404(UserTraderCopy, id=copy_id)
+    trader = copy_record.trader
+    user = copy_record.user
+
+    if not copy_record.cancel_requested:
+        messages.error(request, 'No cancel request found for this relationship.')
+        return redirect('dashboard:trader_detail', trader_id=trader.id)
+
+    if action == 'accept':
+        # Unlink the user
+        copy_record.is_actively_copying = False
+        copy_record.stopped_copying_at = timezone.now()
+        copy_record.cancel_requested = False
+        copy_record.save()
+
+        # Decrease copier count
+        if trader.copiers > 0:
+            trader.copiers -= 1
+            trader.save()
+
+        # Send notification to user
+        Notification.objects.create(
+            user=user,
+            type="copy_trader",
+            title="Copy Cancelled",
+            message=f"Your copy relationship with {trader.name} has been cancelled.",
+            full_details=f"You are no longer copying {trader.name}.",
+        )
+
+        messages.success(request, f'Cancel request accepted. {user.email} is no longer copying {trader.name}.')
+
+    elif action == 'reject':
+        # Clear the cancel request
+        copy_record.cancel_requested = False
+        copy_record.cancel_requested_at = None
+        copy_record.save()
+
+        # Send notification to user
+        Notification.objects.create(
+            user=user,
+            type="copy_trader",
+            title="Cancel Request Rejected",
+            message=f"You are still copying {trader.name}.",
+            full_details=f"Your cancel request for {trader.name} was rejected. You will continue copying this trader.",
+        )
+
+        messages.success(request, f'Cancel request rejected. {user.email} continues copying {trader.name}.')
+
+    return redirect('dashboard:trader_detail', trader_id=trader.id)
 
 
 # ---------------------------------------------------------------------------

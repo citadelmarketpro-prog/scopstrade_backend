@@ -699,20 +699,103 @@ def submit_kyc(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    # Personal Information
+    title = request.data.get("title")
+    first_name = request.data.get("first_name")
+    last_name = request.data.get("last_name")
     dob = request.data.get("dob")
+
+    # Financial Information
+    currency = request.data.get("currency")
+    status_of_employment = request.data.get("status_of_employment")
+    source_of_income = request.data.get("source_of_income")
+    industry = request.data.get("industry")
+    level_of_education = request.data.get("level_of_education")
+    annual_amount = request.data.get("annual_amount")
+    estimated_net_worth = request.data.get("estimated_net_worth")
+
+    # Address Information
     phone = request.data.get("phone")
     address = request.data.get("address")
     postal_code = request.data.get("postal_code")
     city = request.data.get("city")
     region = request.data.get("region")
+
+    # Identity Verification
     id_type = request.data.get("id_type")
     id_front_url = request.data.get("id_front_url")
     id_back_url = request.data.get("id_back_url")
 
-    # Validation
-    if not all([dob, phone, address, city, id_type, id_front_url]):
+    # Validation - All fields are required
+    required_fields = {
+        "title": title,
+        "first_name": first_name,
+        "last_name": last_name,
+        "dob": dob,
+        "currency": currency,
+        "status_of_employment": status_of_employment,
+        "source_of_income": source_of_income,
+        "industry": industry,
+        "level_of_education": level_of_education,
+        "annual_amount": annual_amount,
+        "estimated_net_worth": estimated_net_worth,
+        "phone": phone,
+        "address": address,
+        "postal_code": postal_code,
+        "city": city,
+        "region": region,
+        "id_type": id_type,
+        "id_front_url": id_front_url,
+        "id_back_url": id_back_url,
+    }
+
+    missing_fields = [field for field, value in required_fields.items() if not value]
+    if missing_fields:
         return Response(
-            {"error": "Please fill in all required fields (DOB, phone, address, city, ID type, and front ID image)"},
+            {"error": f"Please fill in all required fields. Missing: {', '.join(missing_fields)}"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Validate choices
+    valid_titles = ["mr", "mrs", "ms", "dr", "prof"]
+    if title not in valid_titles:
+        return Response(
+            {"error": f"Invalid title. Must be one of: {', '.join(valid_titles)}"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    valid_employment_statuses = ["employed", "self_employed", "unemployed", "student", "retired"]
+    if status_of_employment not in valid_employment_statuses:
+        return Response(
+            {"error": f"Invalid employment status. Must be one of: {', '.join(valid_employment_statuses)}"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    valid_income_sources = ["salary", "business", "investments", "pension", "savings", "inheritance", "other"]
+    if source_of_income not in valid_income_sources:
+        return Response(
+            {"error": f"Invalid source of income. Must be one of: {', '.join(valid_income_sources)}"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    valid_education_levels = ["high_school", "associate", "bachelor", "master", "doctorate", "other"]
+    if level_of_education not in valid_education_levels:
+        return Response(
+            {"error": f"Invalid education level. Must be one of: {', '.join(valid_education_levels)}"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    valid_annual_amounts = ["0-15k", "15k-50k", "50k-200k", "200k-500k", "500k-1m", "1m-3m", "3m+"]
+    if annual_amount not in valid_annual_amounts:
+        return Response(
+            {"error": f"Invalid annual amount. Must be one of: {', '.join(valid_annual_amounts)}"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    valid_net_worths = ["0-50k", "50k-100k", "100k-500k", "500k-1m", "1m-5m", "5m+"]
+    if estimated_net_worth not in valid_net_worths:
+        return Response(
+            {"error": f"Invalid net worth. Must be one of: {', '.join(valid_net_worths)}"},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -724,15 +807,25 @@ def submit_kyc(request):
         )
 
     # Update user fields
+    user.title = title
+    user.first_name = first_name
+    user.last_name = last_name
     user.dob = dob
+    user.currency = currency
+    user.status_of_employment = status_of_employment
+    user.source_of_income = source_of_income
+    user.industry = industry
+    user.level_of_education = level_of_education
+    user.annual_amount = annual_amount
+    user.estimated_net_worth = estimated_net_worth
     user.phone = phone
     user.address = address
-    user.postal_code = postal_code or ""
+    user.postal_code = postal_code
     user.city = city
-    user.region = region or user.region
+    user.region = region
     user.id_type = id_type
     user.id_front = id_front_url
-    user.id_back = id_back_url or ""
+    user.id_back = id_back_url
     user.has_submitted_kyc = True
     user.save()
 

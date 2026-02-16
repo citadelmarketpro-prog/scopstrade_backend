@@ -3,7 +3,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Q
-from .models import Trader, UserTraderCopy, UserCopyTraderHistory
+from django.utils import timezone
+from .models import Trader, UserTraderCopy, UserCopyTraderHistory, Notification
 
 
 @api_view(["GET"])
@@ -207,16 +208,24 @@ def copy_trader_action(request):
                 "error": f"You are not copying {trader.name}",
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        copy_record.is_actively_copying = False
+        # Check if already requested
+        if copy_record.cancel_requested:
+            return Response({
+                "success": False,
+                "error": f"You have already requested to cancel copying {trader.name}. Awaiting admin approval.",
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Set cancel request flag instead of immediately canceling
+        from django.utils import timezone
+        copy_record.cancel_requested = True
+        copy_record.cancel_requested_at = timezone.now()
         copy_record.save()
 
-        if trader.copiers > 0:
-            trader.copiers -= 1
-            trader.save()
+        # Cancel request sent. You will be notified once admin reviews your request.
 
         return Response({
             "success": True,
-            "message": f"You have stopped copying {trader.name}",
+            "message": f"Cancel request sent. You will be notified once your request has been processed.",
         })
 
 
@@ -224,13 +233,23 @@ def copy_trader_action(request):
 @permission_classes([IsAuthenticated])
 def copy_trader_status(request, trader_id):
     """Check if user is copying a specific trader"""
-    is_copying = UserTraderCopy.objects.filter(
-        user=request.user,
-        trader_id=trader_id,
-        is_actively_copying=True,
-    ).exists()
-
-    return Response({"success": True, "is_copying": is_copying})
+    try:
+        copy_record = UserTraderCopy.objects.get(
+            user=request.user,
+            trader_id=trader_id,
+            is_actively_copying=True,
+        )
+        return Response({
+            "success": True,
+            "is_copying": True,
+            "cancel_requested": copy_record.cancel_requested,
+        })
+    except UserTraderCopy.DoesNotExist:
+        return Response({
+            "success": True,
+            "is_copying": False,
+            "cancel_requested": False,
+        })
 
 
 @api_view(["GET"])
@@ -415,3 +434,216 @@ def user_trade_history(request):
         "limit": limit,
         "offset": offset,
     })
+
+
+# ==================== ADMIN ENDPOINTS ====================
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def admin_trader_copiers(request, trader_id):
+    """
+    Get all copiers for a trader (admin only).
+    Returns both active copiers and those with pending cancel requests.
+    """
+    # TODO: Add admin permission check
+    if not request.user.is_staff:
+        return Response({
+            "success": False,
+            "error": "Admin access required"
+        }, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        trader = Trader.objects.get(id=trader_id)
+    except Trader.DoesNotExist:
+        return Response({
+            "success": False,
+            "error": "Trader not found"
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    # Get all active copiers
+    active_copiers = UserTraderCopy.objects.filter(
+        trader=trader,
+        is_actively_copying=True,
+        cancel_requested=False
+    ).select_related("user")
+
+    # Get cancel requests
+    cancel_requests = UserTraderCopy.objects.filter(
+        trader=trader,
+        is_actively_copying=True,
+        cancel_requested=True
+    ).select_related("user")
+
+    active_list = []
+    for copy in active_copiers:
+        active_list.append({
+            "id": copy.id,
+            "user_id": copy.user.id,
+            "user_email": copy.user.email,
+            "user_name": f"{copy.user.first_name} {copy.user.last_name}".strip() or copy.user.email,
+            "initial_investment": str(copy.initial_investment_amount),
+            "started_copying_at": copy.started_copying_at.isoformat() if copy.started_copying_at else None,
+        })
+
+    cancel_requests_list = []
+    for copy in cancel_requests:
+        cancel_requests_list.append({
+            "id": copy.id,
+            "user_id": copy.user.id,
+            "user_email": copy.user.email,
+            "user_name": f"{copy.user.first_name} {copy.user.last_name}".strip() or copy.user.email,
+            "initial_investment": str(copy.initial_investment_amount),
+            "started_copying_at": copy.started_copying_at.isoformat() if copy.started_copying_at else None,
+            "cancel_requested_at": copy.cancel_requested_at.isoformat() if copy.cancel_requested_at else None,
+        })
+
+    return Response({
+        "success": True,
+        "trader": {
+            "id": trader.id,
+            "name": trader.name,
+            "username": trader.username,
+        },
+        "active_copiers": active_list,
+        "cancel_requests": cancel_requests_list,
+    })
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def admin_unlink_copier(request):
+    """
+    Admin manually unlinks a user from a trader.
+    """
+    if not request.user.is_staff:
+        return Response({
+            "success": False,
+            "error": "Admin access required"
+        }, status=status.HTTP_403_FORBIDDEN)
+
+    copy_id = request.data.get("copy_id")
+    if not copy_id:
+        return Response({
+            "success": False,
+            "error": "copy_id is required"
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        copy_record = UserTraderCopy.objects.select_related("user", "trader").get(id=copy_id)
+    except UserTraderCopy.DoesNotExist:
+        return Response({
+            "success": False,
+            "error": "Copy relationship not found"
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    trader = copy_record.trader
+    user = copy_record.user
+
+    # Unlink the user
+    copy_record.is_actively_copying = False
+    copy_record.stopped_copying_at = timezone.now()
+    copy_record.save()
+
+    # Decrease copier count
+    if trader.copiers > 0:
+        trader.copiers -= 1
+        trader.save()
+
+    # Send notification to user
+    Notification.objects.create(
+        user=user,
+        type="copy_trader",
+        title="Trader Unlinked",
+        message=f"You have been unlinked from {trader.name}.",
+        full_details=f"Your copy relationship with {trader.name} has been terminated.",
+    )
+
+    return Response({
+        "success": True,
+        "message": f"Successfully unlinked {user.email} from {trader.name}"
+    })
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def admin_handle_cancel_request(request):
+    """
+    Admin accepts or rejects a cancel request.
+    """
+    if not request.user.is_staff:
+        return Response({
+            "success": False,
+            "error": "Admin access required"
+        }, status=status.HTTP_403_FORBIDDEN)
+
+    copy_id = request.data.get("copy_id")
+    action = request.data.get("action")  # "accept" or "reject"
+
+    if not copy_id or action not in ["accept", "reject"]:
+        return Response({
+            "success": False,
+            "error": "copy_id and action (accept/reject) are required"
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        copy_record = UserTraderCopy.objects.select_related("user", "trader").get(id=copy_id)
+    except UserTraderCopy.DoesNotExist:
+        return Response({
+            "success": False,
+            "error": "Copy relationship not found"
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    if not copy_record.cancel_requested:
+        return Response({
+            "success": False,
+            "error": "No cancel request found for this relationship"
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    trader = copy_record.trader
+    user = copy_record.user
+
+    if action == "accept":
+        # Unlink the user
+        copy_record.is_actively_copying = False
+        copy_record.stopped_copying_at = timezone.now()
+        copy_record.cancel_requested = False
+        copy_record.save()
+
+        # Decrease copier count
+        if trader.copiers > 0:
+            trader.copiers -= 1
+            trader.save()
+
+        # Send notification to user
+        Notification.objects.create(
+            user=user,
+            type="copy_trader",
+            title="Copy Cancelled",
+            message=f"Your copy relationship with {trader.name} has been cancelled.",
+            full_details=f"You are no longer copying {trader.name}.",
+        )
+
+        return Response({
+            "success": True,
+            "message": f"Cancel request accepted. {user.email} is no longer copying {trader.name}."
+        })
+
+    elif action == "reject":
+        # Clear the cancel request
+        copy_record.cancel_requested = False
+        copy_record.cancel_requested_at = None
+        copy_record.save()
+
+        # Send notification to user
+        Notification.objects.create(
+            user=user,
+            type="copy_trader",
+            title="Cancel Request Rejected",
+            message=f"You are still copying {trader.name}.",
+            full_details=f"Your cancel request for {trader.name} was rejected. You will continue copying this trader.",
+        )
+
+        return Response({
+            "success": True,
+            "message": f"Cancel request rejected. {user.email} continues copying {trader.name}."
+        })

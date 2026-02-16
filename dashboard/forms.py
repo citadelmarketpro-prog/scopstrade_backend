@@ -204,9 +204,23 @@ class AddCopyTradeForm(forms.Form):
 
 class AddTraderForm(forms.Form):
     # --- Basic Info ---
-    name = forms.CharField(label="Trader Name", max_length=150, widget=forms.TextInput(attrs={'class': _input, 'placeholder': 'Kristijan'}))
-    username = forms.CharField(label="Username", max_length=100, widget=forms.TextInput(attrs={'class': _input, 'placeholder': '@kristijan'}), help_text="Must be unique")
-    avatar = forms.ImageField(label="Avatar", required=False, widget=forms.FileInput(attrs={'class': _file, 'accept': 'image/*'}))
+    name = forms.CharField(
+        label="Trader Name", max_length=150,
+        widget=forms.TextInput(attrs={'class': _input, 'placeholder': 'Kristijan'})
+    )
+    username = forms.CharField(
+        label="Username", max_length=100,
+        widget=forms.TextInput(attrs={'class': _input, 'placeholder': '@kristijan'}),
+        help_text="Must be unique"
+    )
+    avatar = forms.ImageField(
+        label="Avatar Image", required=False,
+        widget=forms.FileInput(attrs={'class': _file, 'accept': 'image/*'})
+    )
+    country_flag = forms.ImageField(
+        label="Country Flag Image", required=False,
+        widget=forms.FileInput(attrs={'class': _file, 'accept': 'image/*'})
+    )
 
     COUNTRY_CHOICES = [
         ('', 'Select Country'),
@@ -218,35 +232,67 @@ class AddTraderForm(forms.Form):
         ('Switzerland', 'Switzerland'), ('Sweden', 'Sweden'), ('Norway', 'Norway'),
         ('Denmark', 'Denmark'), ('Spain', 'Spain'), ('Italy', 'Italy'), ('Other', 'Other'),
     ]
-    country = forms.ChoiceField(choices=COUNTRY_CHOICES, label="Country", widget=forms.Select(attrs={'class': _select}))
+    country = forms.ChoiceField(
+        choices=COUNTRY_CHOICES, label="Country",
+        widget=forms.Select(attrs={'class': _select})
+    )
 
     badge = forms.ChoiceField(
         choices=[('', 'Select Badge'), ('bronze', 'Bronze'), ('silver', 'Silver'), ('gold', 'Gold')],
-        label="Badge Level", widget=forms.Select(attrs={'class': _select}),
+        label="Badge Level",
+        widget=forms.Select(attrs={'class': _select})
+    )
+
+    bio = forms.CharField(
+        label="Bio / Description", required=False,
+        widget=forms.Textarea(attrs={'class': _textarea, 'rows': 3, 'placeholder': 'Short bio about the trader...'})
+    )
+
+    # --- Trading Category & Display ---
+    CATEGORY_CHOICES = [
+        ('', 'Select Category'),
+        ('all', 'All'), ('crypto', 'Crypto'), ('stocks', 'Stocks'),
+        ('healthcare', 'Healthcare'), ('financial', 'Financial Services'),
+        ('options', 'Options'), ('tech', 'Tech'), ('etf', 'ETF'),
+    ]
+    category = forms.ChoiceField(
+        choices=CATEGORY_CHOICES, label="Trading Category",
+        widget=forms.Select(attrs={'class': _select})
+    )
+
+    TREND_CHOICES = [
+        ('', 'Select Trend'),
+        ('upward', 'Upward'),
+        ('downward', 'Downward'),
+    ]
+    trend_direction = forms.ChoiceField(
+        choices=TREND_CHOICES, label="Chart Trend Direction",
+        widget=forms.Select(attrs={'class': _select})
+    )
+
+    tags = forms.CharField(
+        label='Tags', required=False,
+        widget=forms.Textarea(attrs={'class': _textarea, 'rows': 2, 'placeholder': 'Will be replaced by tag builder'}),
+        help_text=''
     )
 
     # --- Capital & Gain ---
-    CAPITAL_CHOICES = [
-        ('', 'Select Starting Capital'),
-        ('1000', '$1,000'), ('5000', '$5,000'), ('10000', '$10,000'), ('25000', '$25,000'),
-        ('50000', '$50,000'), ('75000', '$75,000'), ('100000', '$100,000'),
-        ('250000', '$250,000'), ('500000', '$500,000'), ('1000000', '$1,000,000'),
-    ]
-    capital_dropdown = forms.ChoiceField(choices=CAPITAL_CHOICES, label="Starting Capital (Dropdown)", required=False, widget=forms.Select(attrs={'class': _select}))
-    capital = forms.CharField(label="OR Custom Amount", max_length=50, required=False, widget=forms.TextInput(attrs={'class': _input, 'placeholder': '50000'}))
-
-    GAIN_CHOICES = [
-        ('', 'Select Total Gain %'),
-        ('50', '50%'), ('100', '100%'), ('500', '500%'), ('1000', '1,000%'),
-        ('5000', '5,000%'), ('10000', '10,000%'), ('50000', '50,000%'),
-        ('100000', '100,000%'), ('126799', '126,799%'),
-    ]
-    gain_dropdown = forms.ChoiceField(choices=GAIN_CHOICES, label="Total Gain % (Dropdown)", required=False, widget=forms.Select(attrs={'class': _select}))
-    gain = forms.DecimalField(label="OR Exact Gain %", max_digits=10, decimal_places=2, required=False, widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '126799.00', 'step': '0.01'}))
+    capital = forms.CharField(
+        label="Starting Capital ($)", max_length=50,
+        widget=forms.TextInput(attrs={'class': _input, 'placeholder': '50000'})
+    )
+    gain = forms.DecimalField(
+        label="Total Gain (%)", max_digits=10, decimal_places=2,
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '126799.00', 'step': '0.01'})
+    )
 
     # --- Risk & Time ---
     RISK_CHOICES = [(i, str(i)) for i in range(1, 11)]
-    risk = forms.ChoiceField(choices=[('', 'Select Risk Level')] + RISK_CHOICES, label="Risk Level (1-10)", widget=forms.Select(attrs={'class': _select}))
+    risk = forms.ChoiceField(
+        choices=[('', 'Select Risk Level')] + RISK_CHOICES,
+        label="Risk Level (1-10)",
+        widget=forms.Select(attrs={'class': _select})
+    )
 
     AVG_TRADE_TIME_CHOICES = [
         ('', 'Select Avg Trade Time'),
@@ -254,59 +300,133 @@ class AddTraderForm(forms.Form):
         ('3 weeks', '3 Weeks'), ('1 month', '1 Month'), ('2 months', '2 Months'),
         ('3 months', '3 Months'), ('6 months', '6 Months'),
     ]
-    avg_trade_time = forms.ChoiceField(choices=AVG_TRADE_TIME_CHOICES, label="Avg Trade Time", widget=forms.Select(attrs={'class': _select}))
+    avg_trade_time = forms.ChoiceField(
+        choices=AVG_TRADE_TIME_CHOICES, label="Avg Trade Time",
+        widget=forms.Select(attrs={'class': _select})
+    )
 
-    # --- Copiers & Trades ---
-    COPIERS_CHOICES = [
-        ('', 'Select Copiers Range'),
-        ('1-10', '1-10'), ('11-20', '11-20'), ('21-30', '21-30'), ('31-50', '31-50'),
-        ('51-100', '51-100'), ('101-200', '101-200'), ('201-300', '201-300'), ('300+', '300+'),
-    ]
-    copiers_range = forms.ChoiceField(choices=COPIERS_CHOICES, label="Copiers Range", widget=forms.Select(attrs={'class': _select}))
-    copiers = forms.IntegerField(label="Exact Copiers (Optional)", required=False, widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '40', 'min': '0'}))
+    # --- Copiers & Trades (Direct Input) ---
+    copiers = forms.IntegerField(
+        label="Current Copiers",
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '40', 'min': '0'})
+    )
+    trades = forms.IntegerField(
+        label="Total Trades",
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '251', 'min': '0'})
+    )
 
-    TRADES_CHOICES = [
-        ('', 'Select Trades Range'),
-        ('1-50', '1-50'), ('51-100', '51-100'), ('101-200', '101-200'),
-        ('201-300', '201-300'), ('301-500', '301-500'), ('500+', '500+'),
-    ]
-    trades_range = forms.ChoiceField(choices=TRADES_CHOICES, label="Trades Range", widget=forms.Select(attrs={'class': _select}))
-    trades = forms.IntegerField(label="Exact Trades (Optional)", required=False, widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '251', 'min': '0'}))
+    # --- Performance Stats (Direct Input) ---
+    avg_profit_percent = forms.DecimalField(
+        label="Avg Profit %", max_digits=10, decimal_places=2,
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '86.00', 'step': '0.01'})
+    )
+    avg_loss_percent = forms.DecimalField(
+        label="Avg Loss %", max_digits=10, decimal_places=2,
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '8.00', 'step': '0.01'})
+    )
+    total_wins = forms.IntegerField(
+        label="Total Wins",
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '1166', 'min': '0'})
+    )
+    total_losses = forms.IntegerField(
+        label="Total Losses",
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '160', 'min': '0'})
+    )
 
-    # --- Performance ---
-    AVG_PROFIT_CHOICES = [('', 'Select'), ('10', '10%'), ('20', '20%'), ('30', '30%'), ('40', '40%'), ('50', '50%'), ('60', '60%'), ('70', '70%'), ('80', '80%'), ('86', '86%'), ('90', '90%'), ('95', '95%')]
-    avg_profit_dropdown = forms.ChoiceField(choices=AVG_PROFIT_CHOICES, label="Avg Profit % (Dropdown)", required=False, widget=forms.Select(attrs={'class': _select}))
-    avg_profit_percent = forms.DecimalField(label="OR Exact %", max_digits=10, decimal_places=2, required=False, widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '86.00', 'step': '0.01'}))
+    # --- Additional Stats (Direct Input) ---
+    subscribers = forms.IntegerField(
+        label="Subscribers", required=False, initial=0,
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '49', 'min': '0'})
+    )
+    followers = forms.IntegerField(
+        label="Followers", required=False, initial=0,
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '120', 'min': '0'})
+    )
+    current_positions = forms.IntegerField(
+        label="Current Open Positions", required=False, initial=0,
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '3', 'min': '0'})
+    )
+    expert_rating = forms.DecimalField(
+        label="Expert Rating (out of 5.00)", max_digits=3, decimal_places=2, required=False, initial=5.00,
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '4.80', 'step': '0.01', 'min': '0', 'max': '5'})
+    )
 
-    AVG_LOSS_CHOICES = [('', 'Select'), ('5', '5%'), ('8', '8%'), ('10', '10%'), ('12', '12%'), ('15', '15%'), ('20', '20%'), ('25', '25%'), ('30', '30%')]
-    avg_loss_dropdown = forms.ChoiceField(choices=AVG_LOSS_CHOICES, label="Avg Loss % (Dropdown)", required=False, widget=forms.Select(attrs={'class': _select}))
-    avg_loss_percent = forms.DecimalField(label="OR Exact %", max_digits=10, decimal_places=2, required=False, widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '8.00', 'step': '0.01'}))
+    # --- Performance Metrics ---
+    return_ytd = forms.DecimalField(
+        label="Return YTD %", max_digits=10, decimal_places=2, required=False, initial=0.00,
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '2187.00', 'step': '0.01'})
+    )
+    return_2y = forms.DecimalField(
+        label="Return 2 Years %", max_digits=10, decimal_places=2, required=False, initial=0.00,
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '5000.00', 'step': '0.01'})
+    )
+    avg_score_7d = forms.DecimalField(
+        label="Avg Score (7 days)", max_digits=10, decimal_places=2, required=False, initial=0.00,
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '9.30', 'step': '0.01'})
+    )
+    profitable_weeks = forms.DecimalField(
+        label="Profitable Weeks %", max_digits=5, decimal_places=2, required=False, initial=0.00,
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '92.00', 'step': '0.01'})
+    )
+    min_account_threshold = forms.DecimalField(
+        label="Min Account Balance ($)", max_digits=12, decimal_places=2, required=False, initial=0.00,
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '50000.00', 'step': '0.01'})
+    )
+    trading_days = forms.CharField(
+        label="Trading Days Experience", max_length=50, required=False, initial="0",
+        widget=forms.TextInput(attrs={'class': _input, 'placeholder': '500+'})
+    )
+    total_trades_12m = forms.IntegerField(
+        label="Total Trades (12 months)", required=False, initial=0,
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '150', 'min': '0'})
+    )
 
-    WINS_CHOICES = [('', 'Select'), ('50', '50'), ('100', '100'), ('250', '250'), ('500', '500'), ('1000', '1,000'), ('1166', '1,166'), ('1500', '1,500'), ('2000', '2,000')]
-    total_wins_dropdown = forms.ChoiceField(choices=WINS_CHOICES, label="Total Wins (Dropdown)", required=False, widget=forms.Select(attrs={'class': _select}))
-    total_wins = forms.IntegerField(label="OR Exact", required=False, widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '1166', 'min': '0'}))
+    # --- Advanced Stats ---
+    max_drawdown = forms.DecimalField(
+        label="Max Drawdown %", max_digits=10, decimal_places=2, required=False, initial=0.00,
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '15.50', 'step': '0.01'})
+    )
+    cumulative_earnings_copiers = forms.DecimalField(
+        label="Cumulative Copiers Earnings ($)", max_digits=15, decimal_places=2, required=False, initial=0.00,
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '250000.00', 'step': '0.01'})
+    )
+    cumulative_copiers = forms.IntegerField(
+        label="Cumulative Copiers (All Time)", required=False, initial=0,
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '500', 'min': '0'})
+    )
 
-    LOSSES_CHOICES = [('', 'Select'), ('10', '10'), ('50', '50'), ('100', '100'), ('160', '160'), ('200', '200'), ('300', '300'), ('500', '500')]
-    total_losses_dropdown = forms.ChoiceField(choices=LOSSES_CHOICES, label="Total Losses (Dropdown)", required=False, widget=forms.Select(attrs={'class': _select}))
-    total_losses = forms.IntegerField(label="OR Exact", required=False, widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '160', 'min': '0'}))
+    # --- JSON Fields (Complex Data) - Will be replaced by visual builders ---
+    portfolio_breakdown = forms.CharField(
+        label="Portfolio Breakdown", required=False,
+        widget=forms.Textarea(attrs={'class': _textarea, 'rows': 3, 'placeholder': 'Will be replaced by visual builder'}),
+        help_text=''
+    )
+    top_traded = forms.CharField(
+        label="Top Traded Assets", required=False,
+        widget=forms.Textarea(attrs={'class': _textarea, 'rows': 3, 'placeholder': 'Will be replaced by visual builder'}),
+        help_text=''
+    )
+    performance_data = forms.CharField(
+        label="Performance Data", required=False,
+        widget=forms.Textarea(attrs={'class': _textarea, 'rows': 3, 'placeholder': 'Will be replaced by visual builder'}),
+        help_text=''
+    )
+    monthly_performance = forms.CharField(
+        label="Monthly Performance %", required=False,
+        widget=forms.Textarea(attrs={'class': _textarea, 'rows': 3, 'placeholder': 'Will be replaced by visual builder'}),
+        help_text=''
+    )
+    frequently_traded = forms.CharField(
+        label="Frequently Traded Assets", required=False,
+        widget=forms.Textarea(attrs={'class': _textarea, 'rows': 2, 'placeholder': 'Will be replaced by visual builder'}),
+        help_text=''
+    )
 
-    # --- Optional Stats ---
-    SUBSCRIBERS_CHOICES = [('', 'Select'), ('0', '0'), ('1-10', '1-10'), ('11-25', '11-25'), ('26-50', '26-50'), ('51-100', '51-100'), ('101-200', '101-200'), ('200+', '200+')]
-    subscribers_range = forms.ChoiceField(choices=SUBSCRIBERS_CHOICES, label="Subscribers Range", required=False, widget=forms.Select(attrs={'class': _select}))
-    subscribers = forms.IntegerField(label="Exact Subscribers", required=False, initial=0, widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '49', 'min': '0'}))
-
-    POSITIONS_CHOICES = [('', 'Select'), ('0', 'None'), ('1-5', '1-5'), ('6-10', '6-10'), ('11-20', '11-20'), ('20+', '20+')]
-    current_positions_range = forms.ChoiceField(choices=POSITIONS_CHOICES, label="Current Positions", required=False, widget=forms.Select(attrs={'class': _select}))
-    current_positions = forms.IntegerField(label="Exact Positions", required=False, initial=0, widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '3', 'min': '0'}))
-
-    EXPERT_RATING_CHOICES = [('', 'Select'), ('5.00', '5.00'), ('4.90', '4.90'), ('4.80', '4.80'), ('4.70', '4.70'), ('4.60', '4.60'), ('4.50', '4.50'), ('4.00', '4.00'), ('3.50', '3.50'), ('3.00', '3.00')]
-    expert_rating = forms.ChoiceField(choices=EXPERT_RATING_CHOICES, label="Expert Rating", required=False, widget=forms.Select(attrs={'class': _select}))
-
-    return_ytd = forms.DecimalField(label="Return YTD %", max_digits=10, decimal_places=2, required=False, initial=0.00, widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '2187.00', 'step': '0.01'}))
-    avg_score_7d = forms.DecimalField(label="Avg Score (7d)", max_digits=10, decimal_places=2, required=False, initial=0.00, widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '9.30', 'step': '0.01'}))
-    profitable_weeks = forms.DecimalField(label="Profitable Weeks %", max_digits=5, decimal_places=2, required=False, initial=0.00, widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '92.00', 'step': '0.01'}))
-    min_account_threshold = forms.DecimalField(label="Min Account Balance", max_digits=12, decimal_places=2, required=False, initial=0.00, widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '50000.00', 'step': '0.01'}))
-    is_active = forms.BooleanField(label="Active (Available for Copying)", required=False, initial=True, widget=forms.CheckboxInput(attrs={'class': _checkbox}))
+    # --- Status ---
+    is_active = forms.BooleanField(
+        label="Active (Available for Copying)", required=False, initial=True,
+        widget=forms.CheckboxInput(attrs={'class': _checkbox})
+    )
 
 
 class EditCopyTradeForm(AddCopyTradeForm):
