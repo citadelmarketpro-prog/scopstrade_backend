@@ -69,13 +69,13 @@
         </a>
 
         <!-- Trading -->
-        <p class="px-3 pt-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Trading</p>
+        <!-- <p class="px-3 pt-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Trading</p>
         <a href="{% url 'dashboard:add_trade' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm {% if request.resolver_match.url_name == 'add_trade' %}bg-indigo-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
             <i class="fas fa-chart-bar w-5 text-center"></i>Add Trade
         </a>
         <a href="{% url 'dashboard:add_earnings' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm {% if request.resolver_match.url_name == 'add_earnings' %}bg-indigo-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
             <i class="fas fa-dollar-sign w-5 text-center"></i>Add Earnings
-        </a>
+        </a> -->
 
         <!-- Copy Trading -->
         <p class="px-3 pt-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Copy Trading</p>
@@ -104,10 +104,13 @@
         <!-- Trader Management -->
         <p class="px-3 pt-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Trader Mgmt</p>
         <a href="{% url 'dashboard:traders_list' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm {% if request.resolver_match.url_name == 'traders_list' or request.resolver_match.url_name == 'trader_detail' %}bg-indigo-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
-            <i class="fas fa-user-tie w-5 text-center"></i>Pro Traders
+            <i class="fas fa-user-tie w-5 text-center"></i>Expert Traders
         </a>
-        <a href="{% url 'dashboard:add_trader' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm {% if request.resolver_match.url_name == 'add_trader' %}bg-indigo-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
-            <i class="fas fa-user-plus w-5 text-center"></i>Add Trader
+        <!-- <a href="{% url 'dashboard:add_trader' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm {% if request.resolver_match.url_name == 'add_trader' %}bg-indigo-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
+            <i class="fas fa-user-plus w-5 text-center"></i>Add Expert Trader
+        </a> -->
+        <a href="{% url 'dashboard:user_experts' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm {% if request.resolver_match.url_name == 'user_experts' %}bg-indigo-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
+            <i class="fas fa-users-cog w-5 text-center"></i>User Experts
         </a>
     </nav>
 

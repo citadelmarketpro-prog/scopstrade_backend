@@ -6,13 +6,30 @@
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
     <!-- Profile Card -->
     <div class="bg-white rounded-xl border border-gray-200/60 p-6">
-        <div class="text-center mb-5">
-            {% if trader.avatar %}<img src="{{ trader.avatar.url }}" class="w-20 h-20 rounded-full object-cover mx-auto mb-3">{% else %}<div class="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 text-2xl font-bold mx-auto mb-3">{{ trader.name|first }}</div>{% endif %}
+        <div class="mb-5">
+            <!-- Avatar + Flag row (justify-between) -->
+            <div class="flex items-start justify-between gap-4 mb-3">
+                <!-- Avatar -->
+                <div class="shrink-0">
+                    {% if trader.avatar %}
+                    <img src="{{ trader.avatar.url }}" class="w-20 h-20 rounded-full object-cover border-2 border-gray-100" alt="{{ trader.name }}">
+                    {% else %}
+                    <div class="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 text-2xl font-bold">{{ trader.name|first }}</div>
+                    {% endif %}
+                </div>
+                <!-- Country Flag -->
+                <div class="flex flex-col items-center gap-1 pt-1">
+                    {% if trader.country_flag %}
+                    <img src="{{ trader.country_flag.url }}" class="w-14 h-10 object-cover rounded shadow-sm border border-gray-200/60" alt="{{ trader.country }}">
+                    {% else %}
+                    <div class="w-14 h-10 bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs">No Flag</div>
+                    {% endif %}
+                    <span class="text-xs text-gray-500">{{ trader.country }}</span>
+                </div>
+            </div>
+            <!-- Name + badge (centered) -->
             <h3 class="font-semibold text-gray-800 text-lg">{{ trader.name }}</h3>
             <p class="text-sm text-gray-400">{{ trader.username }}</p>
-            <div class="flex items-center justify-center gap-2 mt-2">
-                <span class="text-sm text-gray-500">{{ trader.country }}</span>
-            </div>
             <span class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium capitalize {% if trader.badge == 'gold' %}bg-yellow-50 text-yellow-700{% elif trader.badge == 'silver' %}bg-gray-100 text-gray-600{% else %}bg-orange-50 text-orange-700{% endif %}">{{ trader.badge }}</span>
         </div>
         <div class="space-y-2.5 text-sm">

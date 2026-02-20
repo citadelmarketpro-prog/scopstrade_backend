@@ -69,6 +69,13 @@ def trader_detail(request, trader_id):
     except Exception:
         pass
 
+    country_flag_url = None
+    try:
+        if t.country_flag:
+            country_flag_url = t.country_flag.url
+    except Exception:
+        pass
+
     # Get frequently traded assets from UserCopyTraderHistory (actual trade history)
     from django.db.models import Count
     frequently_traded_assets = (
@@ -85,6 +92,7 @@ def trader_detail(request, trader_id):
         "name": t.name,
         "username": t.username,
         "avatar_url": avatar_url,
+        "country_flag_url": country_flag_url,
         "badge": t.badge,
         "country": t.country,
         "gain": str(t.gain),

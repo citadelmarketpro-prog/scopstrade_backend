@@ -111,7 +111,7 @@ function initPortfolioBuilder(textareaId) {
         itemsContainer.innerHTML = '';
         items.forEach((item, idx) => {
             const row = document.createElement('div');
-            row.className = 'flex gap-2 items-center';
+            row.className = 'flex flex-wrap gap-2 items-center';
 
             // Build category dropdown
             let categoryOptions = '<option value="">Select or type custom...</option>';
@@ -306,7 +306,7 @@ function initPerformanceBuilder(textareaId, isPercentage = false) {
     const container = document.createElement('div');
 
     const itemsContainer = document.createElement('div');
-    itemsContainer.className = 'grid grid-cols-2 gap-2 mb-3';
+    itemsContainer.className = 'space-y-2 mb-3';
 
     const addBtn = document.createElement('button');
     addBtn.type = 'button';
@@ -326,7 +326,7 @@ function initPerformanceBuilder(textareaId, isPercentage = false) {
         itemsContainer.innerHTML = '';
         items.forEach((item, idx) => {
             const row = document.createElement('div');
-            row.className = 'flex gap-2 items-center';
+            row.className = 'flex flex-wrap gap-2 items-center';
             const valueKey = isPercentage ? 'percentage' : 'value';
 
             // Build month dropdown
@@ -393,7 +393,7 @@ function initFrequentlyTradedBuilder(textareaId) {
 
     // Asset dropdown
     const select = document.createElement('select');
-    select.className = 'px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm';
+    select.className = 'flex-1 min-w-[160px] px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm';
 
     const popularAssets = {
         // Stocks
@@ -479,6 +479,7 @@ function initFrequentlyTradedBuilder(textareaId) {
         }
     });
 
+    inputWrapper.className = 'flex flex-wrap gap-2';
     inputWrapper.appendChild(select);
     inputWrapper.appendChild(input);
     inputWrapper.appendChild(addBtn);

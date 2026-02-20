@@ -50,6 +50,7 @@ urlpatterns = [
     path('traders/<int:trader_id>/edit/', views.edit_trader, name='edit_trader'),
     path('copiers/<int:copy_id>/unlink/', views.unlink_copier, name='unlink_copier'),
     path('copiers/<int:copy_id>/<str:action>/', views.handle_cancel_request, name='handle_cancel_request'),
+    path('user-experts/', views.user_experts, name='user_experts'),
 
     # Investors
     path('investors/', views.investors_list, name='investors_list'),

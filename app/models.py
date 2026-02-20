@@ -348,11 +348,6 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
             instance.save(update_fields=fields_to_update)
 
 
-
-
-
-
-
 class Portfolio(models.Model):
     """Model to track user copy trading portfolios"""
     

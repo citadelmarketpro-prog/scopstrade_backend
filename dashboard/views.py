@@ -875,6 +875,7 @@ def unlink_copier(request, copy_id):
     copy_record = get_object_or_404(UserTraderCopy, id=copy_id)
     trader = copy_record.trader
     user = copy_record.user
+    next_url = request.GET.get('next', '') or request.POST.get('next', '')
 
     if request.method == 'POST':
         # Unlink the user
@@ -897,12 +898,15 @@ def unlink_copier(request, copy_id):
         )
 
         messages.success(request, f'Successfully unlinked {user.email} from {trader.name}.')
+        if next_url:
+            return redirect(next_url)
         return redirect('dashboard:trader_detail', trader_id=trader.id)
 
     return render(request, 'dashboard/confirm_unlink.html', {
         'copy_record': copy_record,
         'trader': trader,
         'user': user,
+        'next_url': next_url,
     })
 
 
@@ -961,7 +965,52 @@ def handle_cancel_request(request, copy_id, action):
 
         messages.success(request, f'Cancel request rejected. {user.email} continues copying {trader.name}.')
 
+    next_url = request.GET.get('next', '')
+    if next_url:
+        return redirect(next_url)
     return redirect('dashboard:trader_detail', trader_id=trader.id)
+
+
+# ---------------------------------------------------------------------------
+# User Experts (global copy-relationship manager)
+# ---------------------------------------------------------------------------
+
+@admin_required
+def user_experts(request):
+    """Global view of all active copy relationships and pending cancel requests."""
+    search = request.GET.get('q', '').strip()
+    trader_filter = request.GET.get('trader', '').strip()
+
+    active_qs = UserTraderCopy.objects.filter(
+        is_actively_copying=True,
+        cancel_requested=False,
+    ).select_related('user', 'trader').order_by('-started_copying_at')
+
+    cancel_qs = UserTraderCopy.objects.filter(
+        is_actively_copying=True,
+        cancel_requested=True,
+    ).select_related('user', 'trader').order_by('-cancel_requested_at')
+
+    if search:
+        q = Q(user__email__icontains=search) | Q(user__first_name__icontains=search) | Q(user__last_name__icontains=search) | Q(trader__name__icontains=search)
+        active_qs = active_qs.filter(q)
+        cancel_qs = cancel_qs.filter(q)
+
+    if trader_filter:
+        active_qs = active_qs.filter(trader_id=trader_filter)
+        cancel_qs = cancel_qs.filter(trader_id=trader_filter)
+
+    traders = Trader.objects.filter(is_active=True).order_by('name')
+
+    return render(request, 'dashboard/user_experts.html', {
+        'active_copiers': active_qs,
+        'cancel_requests': cancel_qs,
+        'traders': traders,
+        'search': search,
+        'trader_filter': trader_filter,
+        'active_count': active_qs.count(),
+        'cancel_count': cancel_qs.count(),
+    })
 
 
 # ---------------------------------------------------------------------------

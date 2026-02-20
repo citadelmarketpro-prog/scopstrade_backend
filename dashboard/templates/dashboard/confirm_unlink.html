@@ -46,7 +46,8 @@
 
         <form method="post" class="flex gap-3">
             {% csrf_token %}
-            <a href="{% url 'dashboard:trader_detail' trader.id %}" class="flex-1 px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium text-center transition">
+            {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+            <a href="{% if next_url %}{{ next_url }}{% else %}{% url 'dashboard:trader_detail' trader.id %}{% endif %}" class="flex-1 px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium text-center transition">
                 Cancel
             </a>
             <button type="submit" class="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition">
