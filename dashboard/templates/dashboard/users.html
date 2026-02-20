@@ -1,4 +1,5 @@
 {% extends "dashboard/base.html" %}
+{% load humanize %}
 {% block title %}Users - ScopTrade Admin{% endblock %}
 {% block page_title %}Manage Users{% endblock %}
 
@@ -44,8 +45,8 @@
                     </div>
                 </td>
                 <td class="px-5 py-3 text-gray-500 font-mono text-xs">{{ u.account_id }}</td>
-                <td class="px-5 py-3 font-medium">${{ u.balance|floatformat:2 }}</td>
-                <td class="px-5 py-3 {% if u.profit > 0 %}text-emerald-600{% elif u.profit < 0 %}text-red-600{% else %}text-gray-400{% endif %}">${{ u.profit|floatformat:2 }}</td>
+                <td class="px-5 py-3 font-medium">${{ u.balance|floatformat:2|intcomma }}</td>
+                <td class="px-5 py-3 {% if u.profit > 0 %}text-emerald-600{% elif u.profit < 0 %}text-red-600{% else %}text-gray-400{% endif %}">${{ u.profit|floatformat:2|intcomma }}</td>
                 <td class="px-5 py-3">
                     <div class="flex items-center gap-1.5">
                         {% if u.is_verified %}<span class="px-2 py-0.5 rounded-full text-xs bg-emerald-50 text-emerald-700">Verified</span>{% else %}<span class="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-500">Unverified</span>{% endif %}

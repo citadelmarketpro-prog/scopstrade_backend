@@ -46,7 +46,7 @@
 
         <!-- Users -->
         <p class="px-3 pt-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Users</p>
-        <a href="{% url 'dashboard:investors_list' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm {% if 'investor' in request.resolver_match.url_name %}bg-indigo-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
+        <a href="{% url 'dashboard:users_trade_list' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm {% if 'investor' in request.resolver_match.url_name %}bg-indigo-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
             <i class="fas fa-wallet w-5 text-center"></i>Investors
         </a>
         <a href="{% url 'dashboard:users_list' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm {% if request.resolver_match.url_name == 'users_list' or request.resolver_match.url_name == 'user_detail' %}bg-indigo-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
@@ -78,13 +78,13 @@
         </a> -->
 
         <!-- Copy Trading -->
-        <p class="px-3 pt-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Copy Trading</p>
+        <!-- <p class="px-3 pt-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Copy Trading</p>
         <a href="{% url 'dashboard:copy_trades_list' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm {% if request.resolver_match.url_name == 'copy_trades_list' or request.resolver_match.url_name == 'copy_trade_detail' %}bg-indigo-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
             <i class="fas fa-copy w-5 text-center"></i>Copy Trades
         </a>
         <a href="{% url 'dashboard:add_copy_trade' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm {% if request.resolver_match.url_name == 'add_copy_trade' %}bg-indigo-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
             <i class="fas fa-plus-circle w-5 text-center"></i>Add Copy Trade
-        </a>
+        </a> -->
 
         <!-- Settings -->
         <p class="px-3 pt-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Settings</p>
@@ -112,6 +112,9 @@
         <a href="{% url 'dashboard:user_experts' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm {% if request.resolver_match.url_name == 'user_experts' %}bg-indigo-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
             <i class="fas fa-users-cog w-5 text-center"></i>User Experts
         </a>
+        <!-- <a href="{% url 'dashboard:users_trade_list' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm {% if request.resolver_match.url_name == 'users_trade_list' or request.resolver_match.url_name == 'user_trade_detail' or request.resolver_match.url_name == 'add_user_trade' or request.resolver_match.url_name == 'bulk_add_user_trade' %}bg-indigo-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
+            <i class="fas fa-chart-line w-5 text-center"></i>User Trades
+        </a> -->
     </nav>
 
     <!-- Logout -->

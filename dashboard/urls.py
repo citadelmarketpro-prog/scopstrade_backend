@@ -52,6 +52,12 @@ urlpatterns = [
     path('copiers/<int:copy_id>/<str:action>/', views.handle_cancel_request, name='handle_cancel_request'),
     path('user-experts/', views.user_experts, name='user_experts'),
 
+    # User Direct Trades
+    path('user-trades/', views.users_trade_list, name='users_trade_list'),
+    path('user-trades/<int:user_id>/', views.user_trade_detail, name='user_trade_detail'),
+    path('user-trades/<int:user_id>/add/', views.add_user_trade, name='add_user_trade'),
+    path('user-trades/bulk-add/', views.bulk_add_user_trade, name='bulk_add_user_trade'),
+
     # Investors
     path('investors/', views.investors_list, name='investors_list'),
     path('investors/<int:user_id>/', views.investor_detail, name='investor_detail'),

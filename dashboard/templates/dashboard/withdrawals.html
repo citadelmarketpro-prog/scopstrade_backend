@@ -1,4 +1,5 @@
 {% extends "dashboard/base.html" %}
+{% load humanize %}
 {% block title %}Withdrawals - ScopTrade Admin{% endblock %}
 {% block page_title %}Withdrawal Requests{% endblock %}
 
@@ -25,7 +26,7 @@
                         <span class="truncate max-w-[160px] text-xs">{{ w.user.email }}</span>
                     </div>
                 </td>
-                <td class="px-5 py-3 font-semibold text-red-600">${{ w.amount|floatformat:2 }}</td>
+                <td class="px-5 py-3 font-semibold text-red-600">${{ w.amount|floatformat:2|intcomma }}</td>
                 <td class="px-5 py-3 text-gray-500">{{ w.currency }}</td>
                 <td class="px-5 py-3 font-mono text-xs text-gray-500">{{ w.reference|truncatechars:14 }}</td>
                 <td class="px-5 py-3"><span class="px-2 py-0.5 rounded-full text-xs font-medium {% if w.status == 'completed' %}bg-emerald-50 text-emerald-700{% elif w.status == 'pending' %}bg-amber-50 text-amber-700{% else %}bg-red-50 text-red-700{% endif %}">{{ w.status|title }}</span></td>

@@ -263,13 +263,15 @@ def copy_trader_status(request, trader_id):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def user_copied_trades(request):
-    """Get all trades from traders the user is copying"""
+    """Get all trades from traders the user is copying, plus user-direct trades."""
     copies = UserTraderCopy.objects.filter(
         user=request.user,
         is_actively_copying=True,
     ).select_related("trader")
 
     trades_list = []
+
+    # Trader-sourced trades
     for copy in copies:
         trade_history = UserCopyTraderHistory.objects.filter(
             trader=copy.trader
@@ -300,6 +302,38 @@ def user_copied_trades(request):
                 "trader_name": copy.trader.name,
                 "trader_id": copy.trader.id,
             })
+
+    # User-direct trades (admin-added directly for this user)
+    direct_trades = UserCopyTraderHistory.objects.filter(
+        user=request.user,
+        trader__isnull=True,
+    ).order_by("-opened_at")
+
+    for trade in direct_trades:
+        user_pl = trade.calculate_user_profit_loss()
+        trades_list.append({
+            "id": trade.id,
+            "market": trade.market,
+            "market_name": trade.market_name,
+            "market_logo_url": trade.market_logo_url,
+            "direction": trade.direction,
+            "duration": trade.duration,
+            "amount": str(trade.amount),
+            "entry_price": str(trade.entry_price),
+            "exit_price": str(trade.exit_price) if trade.exit_price else None,
+            "profit_loss_percent": str(trade.profit_loss_percent),
+            "user_profit_loss": str(user_pl),
+            "status": trade.status,
+            "status_display": trade.get_status_display(),
+            "direction_display": trade.get_direction_display(),
+            "time_ago": trade.time_ago,
+            "is_profit": trade.is_profit,
+            "opened_at": trade.opened_at.isoformat() if trade.opened_at else None,
+            "closed_at": trade.closed_at.isoformat() if trade.closed_at else None,
+            "reference": trade.reference,
+            "trader_name": None,
+            "trader_id": None,
+        })
 
     # Sort all trades by opened_at descending
     trades_list.sort(key=lambda x: x["opened_at"] or "", reverse=True)
@@ -332,7 +366,7 @@ def user_following_traders(request):
             "trader_name": t.name,
             "trader_username": t.username,
             "trader_avatar_url": avatar_url,
-            "initial_investment": str(copy.initial_investment_amount),
+            "initial_investment": str(t.min_account_threshold),
             "started_copying_at": copy.started_copying_at.isoformat() if copy.started_copying_at else None,
         })
 
@@ -364,13 +398,14 @@ def user_trade_history(request):
         user=request.user,
     ).select_related("trader")
 
-    # Build queryset for trades
+    # Build queryset: trader-sourced trades + user-direct trades
+    from django.db.models import Q as DQ
     trader_ids = [copy.trader.id for copy in copies]
     trades_query = UserCopyTraderHistory.objects.filter(
-        trader_id__in=trader_ids
-    ).select_related("trader")
+        DQ(trader_id__in=trader_ids) | DQ(user=request.user, trader__isnull=True)
+    ).select_related("trader", "user")
 
-    # Apply filters
+    # Apply filters (status filter applies to both; trader_id filter only for trader trades)
     if status_filter:
         trades_query = trades_query.filter(status=status_filter)
 
@@ -393,47 +428,75 @@ def user_trade_history(request):
     # Build response
     trades_list = []
     for trade in trades:
-        # Find the user's copy record for this trader to get investment amount
-        user_investment = None
-        for copy in copies:
-            if copy.trader.id == trade.trader.id:
-                user_investment = copy.initial_investment_amount
-                break
+        if trade.trader:
+            # Trader-sourced trade: find the user's investment amount
+            user_investment = None
+            for copy in copies:
+                if copy.trader.id == trade.trader.id:
+                    user_investment = copy.initial_investment_amount
+                    break
+            user_pl = trade.calculate_user_profit_loss(user_investment) if user_investment else 0
 
-        user_pl = trade.calculate_user_profit_loss(user_investment) if user_investment else 0
+            trader_avatar_url = None
+            try:
+                if trade.trader.avatar:
+                    trader_avatar_url = trade.trader.avatar.url
+            except Exception:
+                pass
 
-        trader_avatar_url = None
-        try:
-            if trade.trader.avatar:
-                trader_avatar_url = trade.trader.avatar.url
-        except Exception:
-            pass
-
-        trades_list.append({
-            "id": trade.id,
-            "trader_id": trade.trader.id,
-            "trader_name": trade.trader.name,
-            "trader_username": trade.trader.username,
-            "trader_avatar_url": trader_avatar_url,
-            "market": trade.market,
-            "market_name": trade.market_name,
-            "market_logo_url": trade.market_logo_url,
-            "direction": trade.direction,
-            "direction_display": trade.get_direction_display(),
-            "duration": trade.duration,
-            "amount": str(trade.amount),
-            "entry_price": str(trade.entry_price),
-            "exit_price": str(trade.exit_price) if trade.exit_price else None,
-            "profit_loss_percent": str(trade.profit_loss_percent),
-            "user_profit_loss": str(user_pl),
-            "status": trade.status,
-            "status_display": trade.get_status_display(),
-            "time_ago": trade.time_ago,
-            "is_profit": trade.is_profit,
-            "opened_at": trade.opened_at.isoformat() if trade.opened_at else None,
-            "closed_at": trade.closed_at.isoformat() if trade.closed_at else None,
-            "reference": trade.reference,
-        })
+            trades_list.append({
+                "id": trade.id,
+                "trader_id": trade.trader.id,
+                "trader_name": trade.trader.name,
+                "trader_username": trade.trader.username,
+                "trader_avatar_url": trader_avatar_url,
+                "market": trade.market,
+                "market_name": trade.market_name,
+                "market_logo_url": trade.market_logo_url,
+                "direction": trade.direction,
+                "direction_display": trade.get_direction_display(),
+                "duration": trade.duration,
+                "amount": str(trade.amount),
+                "entry_price": str(trade.entry_price),
+                "exit_price": str(trade.exit_price) if trade.exit_price else None,
+                "profit_loss_percent": str(trade.profit_loss_percent),
+                "user_profit_loss": str(user_pl),
+                "status": trade.status,
+                "status_display": trade.get_status_display(),
+                "time_ago": trade.time_ago,
+                "is_profit": trade.is_profit,
+                "opened_at": trade.opened_at.isoformat() if trade.opened_at else None,
+                "closed_at": trade.closed_at.isoformat() if trade.closed_at else None,
+                "reference": trade.reference,
+            })
+        else:
+            # User-direct trade
+            user_pl = trade.calculate_user_profit_loss()
+            trades_list.append({
+                "id": trade.id,
+                "trader_id": None,
+                "trader_name": None,
+                "trader_username": None,
+                "trader_avatar_url": None,
+                "market": trade.market,
+                "market_name": trade.market_name,
+                "market_logo_url": trade.market_logo_url,
+                "direction": trade.direction,
+                "direction_display": trade.get_direction_display(),
+                "duration": trade.duration,
+                "amount": str(trade.amount),
+                "entry_price": str(trade.entry_price),
+                "exit_price": str(trade.exit_price) if trade.exit_price else None,
+                "profit_loss_percent": str(trade.profit_loss_percent),
+                "user_profit_loss": str(user_pl),
+                "status": trade.status,
+                "status_display": trade.get_status_display(),
+                "time_ago": trade.time_ago,
+                "is_profit": trade.is_profit,
+                "opened_at": trade.opened_at.isoformat() if trade.opened_at else None,
+                "closed_at": trade.closed_at.isoformat() if trade.closed_at else None,
+                "reference": trade.reference,
+            })
 
     return Response({
         "success": True,

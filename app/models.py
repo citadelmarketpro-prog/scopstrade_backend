@@ -691,7 +691,26 @@ class UserCopyTraderHistory(models.Model):
         Trader,
         on_delete=models.CASCADE,
         related_name='trade_history',
-        help_text="Trader who executed this trade"
+        null=True,
+        blank=True,
+        help_text="Trader who executed this trade (null for user-direct trades)"
+    )
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='direct_trade_history',
+        null=True,
+        blank=True,
+        help_text="User this trade is assigned to directly (for admin-added user trades)"
+    )
+
+    investment_amount = models.DecimalField(
+        max_digits=20,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Investment amount for user-direct trades (used for P/L calculation)"
     )
     
     
@@ -775,12 +794,20 @@ class UserCopyTraderHistory(models.Model):
         ]
     
     def __str__(self):
-        return f"{self.trader.name} - {self.market} - {self.direction} - {self.status}"
-    
-    def calculate_user_profit_loss(self, user_investment_amount):
-        """Calculate P/L for a specific user based on their investment amount"""
-        if self.profit_loss_percent:
-            return (Decimal(user_investment_amount) * self.profit_loss_percent) / Decimal('100')
+        if self.trader:
+            source = self.trader.name
+        elif self.user:
+            source = f"User: {self.user.email}"
+        else:
+            source = "Direct"
+        return f"{source} - {self.market} - {self.direction} - {self.status}"
+
+    def calculate_user_profit_loss(self, user_investment_amount=None):
+        """Calculate P/L for a specific user based on their investment amount.
+        For user-direct trades, uses self.investment_amount if set."""
+        amount = self.investment_amount if self.investment_amount else user_investment_amount
+        if amount and self.profit_loss_percent:
+            return (Decimal(str(amount)) * self.profit_loss_percent) / Decimal('100')
         return Decimal('0.00')
     
     @property
@@ -796,7 +823,7 @@ class UserCopyTraderHistory(models.Model):
             'MSFT': 'https://res.cloudinary.com/dkii82r08/image/upload/v1768482104/MSFT_jg76ey.webp',
             'GOOGL': 'https://res.cloudinary.com/dkii82r08/image/upload/v1768482264/googl_jb5hhg.webp',
             'AMZN': 'https://res.cloudinary.com/dkii82r08/image/upload/v1768482319/Amazon_icon_c2x9qa.png',
-            'META': 'https://res.cloudinary.com/dkii82r08/image/upload/v1768482446/Meta_Platforms-Logo.wine_zzmw1l.png',
+            'META': 'https://res.cloudinary.com/dkii82r08/image/upload/v1771617427/pngimg.com_-_meta_PNG4_n8lrzf.png',
             'NFLX': 'https://res.cloudinary.com/dkii82r08/image/upload/v1768482473/Netflix-Symbol_r7jspj.png',
             'INTC': 'https://res.cloudinary.com/dkii82r08/image/upload/v1768482618/intel_zwi8d7.png',
             'PLTR': 'https://res.cloudinary.com/dkii82r08/image/upload/v1768482690/PLTR_toi98h.jpg',

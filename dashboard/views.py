@@ -17,7 +17,7 @@ from .forms import (
     AddTradeForm, AddEarningsForm, ApproveDepositForm,
     ApproveWithdrawalForm, ApproveKYCForm, AddCopyTradeForm,
     EditCopyTradeForm, AddTraderForm, EditTraderForm, EditDepositForm,
-    AdminWalletForm, CardEditForm,
+    AdminWalletForm, CardEditForm, AddUserDirectTradeForm,
 )
 from .decorators import admin_required
 
@@ -1011,6 +1011,151 @@ def user_experts(request):
         'active_count': active_qs.count(),
         'cancel_count': cancel_qs.count(),
     })
+
+
+# ---------------------------------------------------------------------------
+# User Direct Trades
+# ---------------------------------------------------------------------------
+
+@admin_required
+def users_trade_list(request):
+    """List all users for user-direct trade management, with bulk-select support."""
+    search = request.GET.get('q', '').strip()
+    users = CustomUser.objects.filter(is_active=True).order_by('email')
+    if search:
+        users = users.filter(
+            Q(email__icontains=search) |
+            Q(first_name__icontains=search) |
+            Q(last_name__icontains=search)
+        )
+    return render(request, 'dashboard/users_trade_list.html', {
+        'users': users,
+        'search': search,
+        'total_count': users.count(),
+    })
+
+
+@admin_required
+def user_trade_detail(request, user_id):
+    """View all direct trades for a specific user."""
+    viewed_user = get_object_or_404(CustomUser, id=user_id)
+    trades = UserCopyTraderHistory.objects.filter(user=viewed_user).order_by('-opened_at')
+    return render(request, 'dashboard/user_trade_detail.html', {
+        'viewed_user': viewed_user,
+        'trades': trades,
+        'total_trades': trades.count(),
+        'open_trades': trades.filter(status='open').count(),
+        'closed_trades': trades.filter(status='closed').count(),
+    })
+
+
+@admin_required
+def add_user_trade(request, user_id):
+    """Add a single trade directly to a specific user."""
+    import uuid
+    viewed_user = get_object_or_404(CustomUser, id=user_id)
+    if request.method == 'POST':
+        form = AddUserDirectTradeForm(request.POST)
+        if form.is_valid():
+            cd = form.cleaned_data
+            reference = f"UD-{viewed_user.id}-{uuid.uuid4().hex[:8].upper()}"
+            trade = UserCopyTraderHistory.objects.create(
+                user=viewed_user,
+                trader=None,
+                market=cd['market'],
+                direction=cd['direction'],
+                duration=cd['duration'],
+                amount=cd['amount'],
+                investment_amount=cd['investment_amount'],
+                entry_price=cd['entry_price'],
+                exit_price=cd.get('exit_price'),
+                profit_loss_percent=cd['profit_loss_percent'],
+                status=cd['status'],
+                closed_at=cd.get('closed_at'),
+                notes=cd.get('notes', ''),
+                reference=reference,
+            )
+            if cd['status'] == 'closed':
+                profit = trade.calculate_user_profit_loss()
+                if profit:
+                    viewed_user.profit = (viewed_user.profit or Decimal('0.00')) + profit
+                    viewed_user.save(update_fields=['profit'])
+            messages.success(request, f'Trade added successfully for {viewed_user.email}')
+            return redirect('dashboard:user_trade_detail', user_id=viewed_user.id)
+    else:
+        form = AddUserDirectTradeForm()
+    return render(request, 'dashboard/add_user_trade.html', {
+        'form': form,
+        'viewed_user': viewed_user,
+    })
+
+
+@admin_required
+def bulk_add_user_trade(request):
+    """
+    Add the same trade to multiple selected users at once.
+    Stage 1 (POST, stage=select_users): receives user_ids from users_trade_list → shows trade form.
+    Stage 2 (POST, stage=add_trade): processes trade form and creates trades for all users.
+    """
+    import uuid
+    if request.method == 'POST':
+        stage = request.POST.get('stage', 'select_users')
+
+        if stage == 'select_users':
+            user_ids = list(dict.fromkeys(request.POST.getlist('user_ids')))
+            if not user_ids:
+                messages.error(request, 'Please select at least one user.')
+                return redirect('dashboard:users_trade_list')
+            selected_users = CustomUser.objects.filter(id__in=user_ids)
+            form = AddUserDirectTradeForm()
+            return render(request, 'dashboard/bulk_add_user_trade.html', {
+                'form': form,
+                'selected_users': selected_users,
+                'user_ids': user_ids,
+            })
+
+        elif stage == 'add_trade':
+            user_ids = list(dict.fromkeys(request.POST.getlist('user_ids')))
+            form = AddUserDirectTradeForm(request.POST)
+            if form.is_valid():
+                cd = form.cleaned_data
+                selected_users = CustomUser.objects.filter(id__in=user_ids)
+                created_count = 0
+                for u in selected_users:
+                    reference = f"UD-{u.id}-{uuid.uuid4().hex[:8].upper()}"
+                    trade = UserCopyTraderHistory.objects.create(
+                        user=u,
+                        trader=None,
+                        market=cd['market'],
+                        direction=cd['direction'],
+                        duration=cd['duration'],
+                        amount=cd['amount'],
+                        investment_amount=cd['investment_amount'],
+                        entry_price=cd['entry_price'],
+                        exit_price=cd.get('exit_price'),
+                        profit_loss_percent=cd['profit_loss_percent'],
+                        status=cd['status'],
+                        closed_at=cd.get('closed_at'),
+                        notes=cd.get('notes', ''),
+                        reference=reference,
+                    )
+                    if cd['status'] == 'closed':
+                        profit = trade.calculate_user_profit_loss()
+                        if profit:
+                            u.profit = (u.profit or Decimal('0.00')) + profit
+                            u.save(update_fields=['profit'])
+                    created_count += 1
+                messages.success(request, f'Trade added for {created_count} user(s) successfully.')
+                return redirect('dashboard:users_trade_list')
+            else:
+                selected_users = CustomUser.objects.filter(id__in=user_ids)
+                return render(request, 'dashboard/bulk_add_user_trade.html', {
+                    'form': form,
+                    'selected_users': selected_users,
+                    'user_ids': user_ids,
+                })
+
+    return redirect('dashboard:users_trade_list')
 
 
 # ---------------------------------------------------------------------------

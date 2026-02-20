@@ -1,4 +1,5 @@
 {% extends "dashboard/base.html" %}
+{% load humanize %}
 {% block title %}Investors - ScopTrade Admin{% endblock %}
 {% block page_title %}Investors{% endblock %}
 
@@ -49,7 +50,7 @@
                 <td class="px-5 py-3 font-medium">{{ inv.total_deposits }}</td>
                 <td class="px-5 py-3"><span class="px-2 py-0.5 rounded-full text-xs bg-emerald-50 text-emerald-700">{{ inv.completed_deposits }}</span></td>
                 <td class="px-5 py-3"><span class="px-2 py-0.5 rounded-full text-xs bg-yellow-50 text-yellow-700">{{ inv.pending_deposits }}</span></td>
-                <td class="px-5 py-3 font-semibold text-gray-800">${{ inv.total_amount|floatformat:2 }}</td>
+                <td class="px-5 py-3 font-semibold text-gray-800">${{ inv.total_amount|floatformat:2|intcomma }}</td>
                 <td class="px-5 py-3">
                     <a href="{% url 'dashboard:investor_detail' inv.user.id %}" class="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded text-xs font-medium hover:bg-indigo-100 transition">View</a>
                 </td>

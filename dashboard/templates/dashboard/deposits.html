@@ -1,4 +1,5 @@
 {% extends "dashboard/base.html" %}
+{% load humanize %}
 {% block title %}Deposits - ScopTrade Admin{% endblock %}
 {% block page_title %}Deposit Requests{% endblock %}
 
@@ -25,7 +26,7 @@
                         <span class="truncate max-w-[160px] text-xs">{{ d.user.email }}</span>
                     </div>
                 </td>
-                <td class="px-5 py-3 font-semibold">${{ d.amount|floatformat:2 }}</td>
+                <td class="px-5 py-3 font-semibold">${{ d.amount|floatformat:2|intcomma }}</td>
                 <td class="px-5 py-3 text-gray-500">{{ d.currency }}</td>
                 <td class="px-5 py-3 font-mono text-xs text-gray-500">{{ d.reference|truncatechars:14 }}</td>
                 <td class="px-5 py-3"><span class="px-2 py-0.5 rounded-full text-xs font-medium {% if d.status == 'completed' %}bg-emerald-50 text-emerald-700{% elif d.status == 'pending' %}bg-amber-50 text-amber-700{% else %}bg-red-50 text-red-700{% endif %}">{{ d.status|title }}</span></td>

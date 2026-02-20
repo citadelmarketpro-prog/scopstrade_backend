@@ -1,4 +1,5 @@
 {% extends "dashboard/base.html" %}
+{% load humanize %}
 {% block title %}{{ trader.name }} - ScopTrade Admin{% endblock %}
 {% block page_title %}Trader Profile{% endblock %}
 
@@ -34,13 +35,13 @@
         </div>
         <div class="space-y-2.5 text-sm">
             <div class="flex justify-between"><span class="text-gray-500">Gain</span><span class="font-semibold text-emerald-600">{{ trader.gain|floatformat:0 }}%</span></div>
-            <div class="flex justify-between"><span class="text-gray-500">Capital</span><span>${{ trader.capital }}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">Capital</span><span>${{ trader.capital|floatformat:2|intcomma }}</span></div>
             <div class="flex justify-between"><span class="text-gray-500">Risk</span><span>{{ trader.risk }}/10</span></div>
             <div class="flex justify-between"><span class="text-gray-500">Win Rate</span><span>{{ trader.win_rate|floatformat:1 }}%</span></div>
             <div class="flex justify-between"><span class="text-gray-500">Copiers</span><span>{{ trader.copiers }}</span></div>
             <div class="flex justify-between"><span class="text-gray-500">Avg Trade Time</span><span>{{ trader.avg_trade_time }}</span></div>
             <div class="flex justify-between"><span class="text-gray-500">Expert Rating</span><span>{{ trader.expert_rating }}/5</span></div>
-            <div class="flex justify-between"><span class="text-gray-500">Min Threshold</span><span>${{ trader.min_account_threshold|floatformat:2 }}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">Min Threshold</span><span>${{ trader.min_account_threshold|floatformat:2|intcomma }}</span></div>
         </div>
         <a href="{% url 'dashboard:edit_trader' trader.id %}" class="block mt-5 text-center px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 transition">Edit Trader</a>
     </div>
@@ -48,7 +49,7 @@
     <!-- Stats + Trades -->
     <div class="lg:col-span-2 space-y-6">
         <!-- Stats Cards -->
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div class="bg-white rounded-xl border border-gray-200/60 p-4 text-center">
                 <p class="text-2xl font-bold text-gray-800">{{ total_trades }}</p>
                 <p class="text-xs text-gray-500">Total Trades</p>
@@ -118,7 +119,7 @@
                         </div>
                     </td>
                     <td class="px-5 py-3 text-gray-600">{{ rel.user.email }}</td>
-                    <td class="px-5 py-3 font-medium text-gray-800">${{ rel.initial_investment_amount|floatformat:2 }}</td>
+                    <td class="px-5 py-3 font-medium text-gray-800">${{ rel.initial_investment_amount|floatformat:2|intcomma }}</td>
                     <td class="px-5 py-3 text-xs text-gray-400">{{ rel.started_copying_at|date:"M d, Y" }}</td>
                     <td class="px-5 py-3">
                         <a href="{% url 'dashboard:unlink_copier' rel.id %}" class="inline-block px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded text-xs font-medium transition">Unlink</a>
@@ -159,7 +160,7 @@
                         </div>
                     </td>
                     <td class="px-5 py-3 text-gray-600">{{ rel.user.email }}</td>
-                    <td class="px-5 py-3 font-medium text-gray-800">${{ rel.initial_investment_amount|floatformat:2 }}</td>
+                    <td class="px-5 py-3 font-medium text-gray-800">${{ rel.initial_investment_amount|floatformat:2|intcomma }}</td>
                     <td class="px-5 py-3 text-xs text-gray-400">{{ rel.cancel_requested_at|date:"M d, Y" }}</td>
                     <td class="px-5 py-3">
                         <div class="flex gap-2">

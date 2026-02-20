@@ -1,4 +1,5 @@
 {% extends "dashboard/base.html" %}
+{% load humanize %}
 {% block title %}User Experts - ScopTrade Admin{% endblock %}
 {% block page_title %}User Experts{% endblock %}
 
@@ -85,7 +86,7 @@
                     <th class="px-5 py-3">User</th>
                     <th class="px-5 py-3">Email</th>
                     <th class="px-5 py-3">Trader</th>
-                    <th class="px-5 py-3">Investment</th>
+                    <th class="px-5 py-3">Min. Threshold</th>
                     <th class="px-5 py-3">Started</th>
                     <th class="px-5 py-3">Actions</th>
                 </tr>
@@ -107,7 +108,7 @@
                         {{ rel.trader.name }}
                     </a>
                 </td>
-                <td class="px-5 py-3 font-semibold text-gray-800">${{ rel.initial_investment_amount|floatformat:2 }}</td>
+                <td class="px-5 py-3 font-semibold text-gray-800">${{ rel.trader.min_account_threshold|floatformat:2|intcomma }}</td>
                 <td class="px-5 py-3 text-xs text-gray-400">{{ rel.started_copying_at|date:"M d, Y" }}</td>
                 <td class="px-5 py-3">
                     <a href="{% url 'dashboard:unlink_copier' rel.id %}?next={% url 'dashboard:user_experts' %}{% if search %}?q={{ search }}{% endif %}"
@@ -147,7 +148,7 @@
                     <th class="px-5 py-3">User</th>
                     <th class="px-5 py-3">Email</th>
                     <th class="px-5 py-3">Trader</th>
-                    <th class="px-5 py-3">Investment</th>
+                    <th class="px-5 py-3">Min. Threshold</th>
                     <th class="px-5 py-3">Requested</th>
                     <th class="px-5 py-3">Actions</th>
                 </tr>
@@ -169,7 +170,7 @@
                         {{ rel.trader.name }}
                     </a>
                 </td>
-                <td class="px-5 py-3 font-semibold text-gray-800">${{ rel.initial_investment_amount|floatformat:2 }}</td>
+                <td class="px-5 py-3 font-semibold text-gray-800">${{ rel.trader.min_account_threshold|floatformat:2|intcomma }}</td>
                 <td class="px-5 py-3 text-xs text-gray-400">
                     {% if rel.cancel_requested_at %}{{ rel.cancel_requested_at|date:"M d, Y" }}{% else %}—{% endif %}
                 </td>

@@ -1,4 +1,5 @@
 {% extends "dashboard/base.html" %}
+{% load humanize %}
 {% block title %}Copy Trades - ScopTrade Admin{% endblock %}
 {% block page_title %}Copy Trades{% endblock %}
 
@@ -41,7 +42,7 @@
                 <td class="px-5 py-3 text-xs text-gray-500">{{ ct.copying_users_count }}</td>
                 <td class="px-5 py-3 font-medium">{{ ct.market }}</td>
                 <td class="px-5 py-3"><span class="px-2 py-0.5 rounded text-xs font-medium {% if ct.direction == 'buy' %}bg-emerald-50 text-emerald-700{% else %}bg-red-50 text-red-700{% endif %}">{{ ct.direction|upper }}</span></td>
-                <td class="px-5 py-3">${{ ct.amount|floatformat:2 }}</td>
+                <td class="px-5 py-3">${{ ct.amount|floatformat:2|intcomma }}</td>
                 <td class="px-5 py-3 font-medium {% if ct.profit_loss_percent >= 0 %}text-emerald-600{% else %}text-red-600{% endif %}">{{ ct.profit_loss_percent }}%</td>
                 <td class="px-5 py-3"><span class="px-2 py-0.5 rounded-full text-xs font-medium {% if ct.status == 'open' %}bg-blue-50 text-blue-700{% else %}bg-gray-100 text-gray-600{% endif %}">{{ ct.status|title }}</span></td>
                 <td class="px-5 py-3 text-xs text-gray-400">{{ ct.opened_at|date:"M d, H:i" }}</td>

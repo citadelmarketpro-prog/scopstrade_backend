@@ -1,4 +1,5 @@
 {% extends "dashboard/base.html" %}
+{% load humanize %}
 {% block title %}{{ investor.email }} - Investor - ScopTrade Admin{% endblock %}
 {% block page_title %}Investor Detail{% endblock %}
 
@@ -44,14 +45,14 @@
         </div>
 
         <!-- Amount Summary -->
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="bg-white rounded-xl border border-gray-200/60 p-4">
                 <p class="text-xs text-gray-500 mb-1">Total Completed Amount</p>
-                <p class="text-xl font-bold text-emerald-600">${{ total_completed_amount|floatformat:2 }}</p>
+                <p class="text-xl font-bold text-emerald-600">${{ total_completed_amount|floatformat:2|intcomma }}</p>
             </div>
             <div class="bg-white rounded-xl border border-gray-200/60 p-4">
                 <p class="text-xs text-gray-500 mb-1">Total Pending Amount</p>
-                <p class="text-xl font-bold text-yellow-600">${{ total_pending_amount|floatformat:2 }}</p>
+                <p class="text-xl font-bold text-yellow-600">${{ total_pending_amount|floatformat:2|intcomma }}</p>
             </div>
         </div>
 
@@ -72,7 +73,7 @@
                     {% for dep in deposits %}
                     <tr class="hover:bg-gray-50">
                         <td class="px-5 py-3 text-gray-500">#{{ dep.id }}</td>
-                        <td class="px-5 py-3 font-semibold">${{ dep.amount|floatformat:2 }}</td>
+                        <td class="px-5 py-3 font-semibold">${{ dep.amount|floatformat:2|intcomma }}</td>
                         <td class="px-5 py-3 text-gray-600">{{ dep.payment_method|default:"—" }}</td>
                         <td class="px-5 py-3">
                             <span class="px-2 py-0.5 rounded-full text-xs font-medium

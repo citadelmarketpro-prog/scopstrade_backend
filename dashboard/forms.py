@@ -434,6 +434,63 @@ class EditCopyTradeForm(AddCopyTradeForm):
     pass
 
 
+class AddUserDirectTradeForm(forms.Form):
+    """Form to add a trade directly to a user (not tied to a trader)."""
+    market = forms.ChoiceField(
+        choices=[('', 'Select Market')] + list(UserCopyTraderHistory.MARKET_CHOICES),
+        label="Market / Asset", widget=forms.Select(attrs={'class': _select}),
+    )
+    direction = forms.ChoiceField(
+        choices=[('', 'Select Direction')] + list(UserCopyTraderHistory.DIRECTION_CHOICES),
+        label="Trade Direction", widget=forms.Select(attrs={'class': _select}),
+    )
+
+    DURATION_CHOICES = [
+        ('', 'Select Duration'),
+        ('2 minutes', '2 Minutes'), ('5 minutes', '5 Minutes'), ('10 minutes', '10 Minutes'),
+        ('15 minutes', '15 Minutes'), ('30 minutes', '30 Minutes'),
+        ('1 hour', '1 Hour'), ('2 hours', '2 Hours'), ('4 hours', '4 Hours'), ('12 hours', '12 Hours'),
+        ('1 day', '1 Day'), ('2 days', '2 Days'),
+        ('1 week', '1 Week'), ('2 weeks', '2 Weeks'), ('1 month', '1 Month'),
+    ]
+    duration = forms.ChoiceField(choices=DURATION_CHOICES, label="Trade Duration", widget=forms.Select(attrs={'class': _select}))
+
+    amount = forms.DecimalField(
+        label="Base Trade Amount", max_digits=20, decimal_places=2,
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '1000.00', 'step': '0.01'}),
+    )
+    investment_amount = forms.DecimalField(
+        label="User Investment Amount", max_digits=20, decimal_places=2,
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '5000.00', 'step': '0.01'}),
+        help_text="Used to calculate the user's dollar P/L",
+    )
+    entry_price = forms.DecimalField(
+        label="Entry Price", max_digits=20, decimal_places=8,
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '50000.00', 'step': '0.00000001'}),
+    )
+    exit_price = forms.DecimalField(
+        label="Exit Price (Optional)", max_digits=20, decimal_places=8, required=False,
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '51000.00', 'step': '0.00000001'}),
+    )
+    profit_loss_percent = forms.DecimalField(
+        label="Profit / Loss %", max_digits=10, decimal_places=2,
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '15.50', 'step': '0.01'}),
+        help_text="Positive for profit, negative for loss",
+    )
+    status = forms.ChoiceField(
+        choices=[('', 'Select Status')] + list(UserCopyTraderHistory.STATUS_CHOICES),
+        label="Trade Status", widget=forms.Select(attrs={'class': _select}),
+    )
+    closed_at = forms.DateTimeField(
+        label="Close Date & Time (Optional)", required=False,
+        widget=forms.DateTimeInput(attrs={'class': _input, 'type': 'datetime-local'}),
+    )
+    notes = forms.CharField(
+        label="Notes (Optional)", required=False,
+        widget=forms.Textarea(attrs={'class': _textarea, 'rows': 3, 'placeholder': 'Additional notes…'}),
+    )
+
+
 class EditTraderForm(AddTraderForm):
     pass
 

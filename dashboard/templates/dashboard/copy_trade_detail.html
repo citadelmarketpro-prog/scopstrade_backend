@@ -1,4 +1,5 @@
 {% extends "dashboard/base.html" %}
+{% load humanize %}
 {% block title %}Copy Trade #{{ copy_trade.id }}{% endblock %}
 {% block page_title %}Copy Trade Details{% endblock %}
 
@@ -23,9 +24,9 @@
             <div class="py-3 border-b border-gray-100"><p class="text-gray-500 text-xs mb-1">Market</p><p class="font-medium">{{ copy_trade.market }}</p></div>
             <div class="py-3 border-b border-gray-100"><p class="text-gray-500 text-xs mb-1">Direction</p><p><span class="px-2 py-0.5 rounded text-xs {% if copy_trade.direction == 'buy' %}bg-emerald-50 text-emerald-700{% else %}bg-red-50 text-red-700{% endif %}">{{ copy_trade.direction|upper }}</span></p></div>
             <div class="py-3 border-b border-gray-100"><p class="text-gray-500 text-xs mb-1">Duration</p><p>{{ copy_trade.duration }}</p></div>
-            <div class="py-3 border-b border-gray-100"><p class="text-gray-500 text-xs mb-1">Amount</p><p class="font-medium">${{ copy_trade.amount|floatformat:2 }}</p></div>
-            <div class="py-3 border-b border-gray-100"><p class="text-gray-500 text-xs mb-1">Entry</p><p>${{ copy_trade.entry_price|floatformat:2 }}</p></div>
-            <div class="py-3 border-b border-gray-100"><p class="text-gray-500 text-xs mb-1">Exit</p><p>{% if copy_trade.exit_price %}${{ copy_trade.exit_price|floatformat:2 }}{% else %}—{% endif %}</p></div>
+            <div class="py-3 border-b border-gray-100"><p class="text-gray-500 text-xs mb-1">Amount</p><p class="font-medium">${{ copy_trade.amount|floatformat:2|intcomma }}</p></div>
+            <div class="py-3 border-b border-gray-100"><p class="text-gray-500 text-xs mb-1">Entry</p><p>${{ copy_trade.entry_price|floatformat:2|intcomma }}</p></div>
+            <div class="py-3 border-b border-gray-100"><p class="text-gray-500 text-xs mb-1">Exit</p><p>{% if copy_trade.exit_price %}${{ copy_trade.exit_price|floatformat:2|intcomma }}{% else %}—{% endif %}</p></div>
             <div class="py-3"><p class="text-gray-500 text-xs mb-1">P/L %</p><p class="text-lg font-bold {% if copy_trade.profit_loss_percent >= 0 %}text-emerald-600{% else %}text-red-600{% endif %}">{{ copy_trade.profit_loss_percent }}%</p></div>
             <div class="py-3"><p class="text-gray-500 text-xs mb-1">Opened</p><p>{{ copy_trade.opened_at|date:"M d, Y H:i" }}</p></div>
             {% if copy_trade.closed_at %}<div class="py-3"><p class="text-gray-500 text-xs mb-1">Closed</p><p>{{ copy_trade.closed_at|date:"M d, Y H:i" }}</p></div>{% endif %}
@@ -55,8 +56,8 @@
             {% for item in users_with_pl %}
             <tr class="hover:bg-gray-50">
                 <td class="px-5 py-3">{{ item.copy_relation.user.email }}</td>
-                <td class="px-5 py-3">${{ item.copy_relation.initial_investment_amount|floatformat:2 }}</td>
-                <td class="px-5 py-3 font-medium {% if item.is_profit %}text-emerald-600{% else %}text-red-600{% endif %}">${{ item.profit_loss|floatformat:2 }}</td>
+                <td class="px-5 py-3">${{ item.copy_relation.initial_investment_amount|floatformat:2|intcomma }}</td>
+                <td class="px-5 py-3 font-medium {% if item.is_profit %}text-emerald-600{% else %}text-red-600{% endif %}">${{ item.profit_loss|floatformat:2|intcomma }}</td>
             </tr>
             {% endfor %}
             </tbody>

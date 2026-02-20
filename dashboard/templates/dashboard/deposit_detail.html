@@ -1,4 +1,5 @@
 {% extends "dashboard/base.html" %}
+{% load humanize %}
 {% block title %}Deposit #{{ deposit.id }} - ScopTrade Admin{% endblock %}
 {% block page_title %}Deposit Details{% endblock %}
 
@@ -7,10 +8,10 @@
     <!-- Deposit Info -->
     <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200/60 p-6">
         <div class="flex items-center justify-between mb-6">
-            <h3 class="font-semibold text-gray-800 text-lg">${{ deposit.amount|floatformat:2 }}</h3>
+            <h3 class="font-semibold text-gray-800 text-lg">${{ deposit.amount|floatformat:2|intcomma }}</h3>
             <span class="px-3 py-1 rounded-full text-xs font-medium {% if deposit.status == 'completed' %}bg-emerald-50 text-emerald-700{% elif deposit.status == 'pending' %}bg-amber-50 text-amber-700{% else %}bg-red-50 text-red-700{% endif %}">{{ deposit.status|title }}</span>
         </div>
-        <div class="grid grid-cols-2 gap-4 text-sm">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div class="py-3 border-b border-gray-100"><p class="text-gray-500 text-xs mb-1">Currency</p><p class="font-medium">{{ deposit.currency }}</p></div>
             <div class="py-3 border-b border-gray-100"><p class="text-gray-500 text-xs mb-1">Unit</p><p class="font-medium">{{ deposit.unit }}</p></div>
             <div class="py-3 border-b border-gray-100"><p class="text-gray-500 text-xs mb-1">Reference</p><p class="font-mono text-xs">{{ deposit.reference }}</p></div>
@@ -49,7 +50,7 @@
             <p class="text-xs text-gray-400 font-mono">{{ deposit.user.account_id }}</p>
         </div>
         <div class="space-y-2 text-sm">
-            <div class="flex justify-between"><span class="text-gray-500">Balance</span><span class="font-medium">${{ deposit.user.balance|floatformat:2 }}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">Balance</span><span class="font-medium">${{ deposit.user.balance|floatformat:2|intcomma }}</span></div>
             <div class="flex justify-between"><span class="text-gray-500">Verified</span>{% if deposit.user.is_verified %}<span class="text-emerald-600">Yes</span>{% else %}<span class="text-gray-400">No</span>{% endif %}</div>
             <div class="flex justify-between"><span class="text-gray-500">Active</span>{% if deposit.user.is_active %}<span class="text-emerald-600">Yes</span>{% else %}<span class="text-red-500">No</span>{% endif %}</div>
         </div>
