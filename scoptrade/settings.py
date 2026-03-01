@@ -274,6 +274,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3001",
     "https://scopstrade.vercel.app",
     "https://scopstrade.com",
+    "https://www.scopstrade.com",
     "https://scoptrade-backend.vercel.app",
     "https://scoptrade.vercel.app",
     "https://scopstrade-backend.vercel.app",
@@ -351,6 +352,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8001',
     'https://scopstrade.vercel.app',
     'https://scopstrade.com',
+    "https://www.scopstrade.com",
     'https://scoptrade-backend.vercel.app',
     "https://scoptrade.vercel.app",
     "https://scopstrade-backend.vercel.app",
@@ -362,3 +364,5 @@ X_FRAME_OPTIONS = 'DENY'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
