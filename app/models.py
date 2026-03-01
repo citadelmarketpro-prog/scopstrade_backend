@@ -136,7 +136,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
             ("doctorate", "Doctorate"),
             ("other", "Other"),
         ],
-        help_text="Highest level of education"
+        help_text="Highest level of education",
+        default="other",
     )
 
     annual_amount = models.CharField(
@@ -446,7 +447,7 @@ class Trader(models.Model):
         help_text="Number of current open positions"
     )
     min_account_threshold = models.DecimalField(
-        max_digits=12,
+        max_digits=20,
         decimal_places=2,
         default=0.00,
         help_text="Minimum account balance required to copy this trader"
@@ -947,17 +948,17 @@ class UserTraderCopy(models.Model):
     )
     # ✅ Changed field name
     initial_investment_amount = models.DecimalField(
-        max_digits=12,
+        max_digits=20,
         decimal_places=2,
-        default=0.00,  # ✅ ADD THIS
+        default=0.00,
         help_text="Amount user initially locked in with"
     )
-    
+
     # ✅ Changed field name
     minimum_threshold_at_start = models.DecimalField(
-        max_digits=12,
+        max_digits=20,
         decimal_places=2,
-        default=0.00,  # ✅ ADD THIS
+        default=0.00,
         help_text="Trader's minimum threshold when user started copying (for reference only)"
     )
     started_copying_at = models.DateTimeField(

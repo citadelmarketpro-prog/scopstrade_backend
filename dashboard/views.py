@@ -5,6 +5,7 @@ from django.db.models import Q, Sum, Count
 from django.utils import timezone
 from django.http import JsonResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db import transaction
 from decimal import Decimal
 
 from app.models import (
@@ -214,6 +215,68 @@ def user_detail(request, user_id):
     return render(request, 'dashboard/user_detail.html', {
         'view_user': user, 'transactions': transactions, 'portfolios': portfolios,
     })
+
+
+@admin_required
+def delete_user(request, user_id):
+    view_user = get_object_or_404(CustomUser, id=user_id)
+
+    if view_user.is_superuser:
+        messages.error(request, "Superuser accounts cannot be deleted.")
+        return redirect('dashboard:user_detail', user_id=user_id)
+
+    if request.user.id == view_user.id:
+        messages.error(request, "You cannot delete your own account.")
+        return redirect('dashboard:user_detail', user_id=user_id)
+
+    if request.method == 'POST':
+        email = view_user.email
+        try:
+            with transaction.atomic():
+                # ── 1. JWT token blacklist (BlacklistedToken → OutstandingToken chain) ──
+                try:
+                    from rest_framework_simplejwt.token_blacklist.models import (
+                        BlacklistedToken, OutstandingToken,
+                    )
+                    BlacklistedToken.objects.filter(token__user=view_user).delete()
+                    OutstandingToken.objects.filter(user=view_user).delete()
+                except Exception:
+                    pass
+
+                # ── 2. All user-related records (explicit order avoids SQLite FK issues) ──
+                view_user.portfolios.all().delete()
+                view_user.direct_trade_history.all().delete()
+                view_user.copied_traders.all().delete()
+                view_user.transactions.all().delete()
+                view_user.notifications.all().delete()
+                view_user.stock_positions.all().delete()
+                view_user.wallet_connections.all().delete()
+                view_user.cards.all().delete()
+                view_user.tickets.all().delete()
+                view_user.payment_methods.all().delete()
+                view_user.signal_purchases.all().delete()
+                view_user.trades.all().delete()
+
+                # ── 3. Admin action log entries ──
+                try:
+                    from django.contrib.admin.models import LogEntry
+                    LogEntry.objects.filter(user=view_user).delete()
+                except Exception:
+                    pass
+
+                # ── 4. Clear self-referential referred_by FK on other users ──
+                CustomUser.objects.filter(referred_by=view_user).update(referred_by=None)
+
+                # ── 5. Delete the user (no FK children remain) ──
+                view_user.delete()
+
+            messages.success(request, f"User {email} has been permanently deleted.")
+            return redirect('dashboard:users_list')
+        except Exception as e:
+            messages.error(request, f"Could not delete user: {e}")
+            return redirect('dashboard:user_detail', user_id=user_id)
+
+    return render(request, 'dashboard/delete_user.html', {'view_user': view_user})
 
 
 # ---------------------------------------------------------------------------

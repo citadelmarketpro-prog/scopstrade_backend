@@ -239,7 +239,7 @@ def _footer_html(user_email):
         </div>
         <div class="footer-links">
             <a href="{frontend}/privacy-policy">Privacy Policy</a>
-            <a href="{frontend}/terms-service">Terms of Service</a>
+            <a href="{frontend}/terms-of-service">Terms of Service</a>
         </div>
         <div class="footer-text" style="margin-top: 16px;">
             Sent to {user_email} &middot; &copy; {timezone.now().year} ScopsTrade. All rights reserved.

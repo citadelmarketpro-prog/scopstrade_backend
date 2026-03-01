@@ -165,17 +165,17 @@ def register_user_with_verification(request):
             print(f"Failed to send welcome email: {e}")
 
         # Send verification code email (critical)
-        email_sent = send_verification_code_email(user, verification_code)
+        # email_sent = send_verification_code_email(user, verification_code)
 
-        if not email_sent:
-            return Response(
-                {"error": "Failed to send verification email. Please try again."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+        # if not email_sent:
+        #     return Response(
+        #         {"error": "Failed to send verification email. Please try again."},
+        #         status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        #     )
 
         response = Response(
             {
-                "message": "Registration successful! Please check your email for verification code.",
+                "message": "Registration successful!",
                 "user": {
                     "email": user.email,
                     "first_name": user.first_name,
@@ -710,7 +710,6 @@ def submit_kyc(request):
     status_of_employment = request.data.get("status_of_employment")
     source_of_income = request.data.get("source_of_income")
     industry = request.data.get("industry")
-    level_of_education = request.data.get("level_of_education")
     annual_amount = request.data.get("annual_amount")
     estimated_net_worth = request.data.get("estimated_net_worth")
 
@@ -736,7 +735,6 @@ def submit_kyc(request):
         "status_of_employment": status_of_employment,
         "source_of_income": source_of_income,
         "industry": industry,
-        "level_of_education": level_of_education,
         "annual_amount": annual_amount,
         "estimated_net_worth": estimated_net_worth,
         "phone": phone,
@@ -778,12 +776,7 @@ def submit_kyc(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    valid_education_levels = ["high_school", "associate", "bachelor", "master", "doctorate", "other"]
-    if level_of_education not in valid_education_levels:
-        return Response(
-            {"error": f"Invalid education level. Must be one of: {', '.join(valid_education_levels)}"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+    
 
     valid_annual_amounts = ["0-15k", "15k-50k", "50k-200k", "200k-500k", "500k-1m", "1m-3m", "3m+"]
     if annual_amount not in valid_annual_amounts:
@@ -815,7 +808,6 @@ def submit_kyc(request):
     user.status_of_employment = status_of_employment
     user.source_of_income = source_of_income
     user.industry = industry
-    user.level_of_education = level_of_education
     user.annual_amount = annual_amount
     user.estimated_net_worth = estimated_net_worth
     user.phone = phone
