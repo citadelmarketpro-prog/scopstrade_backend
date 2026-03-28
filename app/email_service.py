@@ -278,9 +278,8 @@ def send_welcome_email(user):
 
                 <div class="info-box">
                     <p><strong>Next steps to get started:</strong></p>
-                    <p style="margin-top: 8px;">1. Verify your email address</p>
-                    <p>2. Complete identity verification (KYC)</p>
-                    <p>3. Fund your account and begin trading</p>
+                    <p>1. Complete identity verification (KYC)</p>
+                    <p>2. Fund your account and begin trading</p>
                 </div>
 
                 <div class="text">

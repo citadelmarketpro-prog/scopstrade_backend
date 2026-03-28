@@ -277,10 +277,6 @@ class AddTraderForm(forms.Form):
     )
 
     # --- Capital & Gain ---
-    capital = forms.CharField(
-        label="Starting Capital ($)", max_length=50,
-        widget=forms.TextInput(attrs={'class': _input, 'placeholder': '50000'})
-    )
     gain = forms.DecimalField(
         label="Total Gain (%)", max_digits=10, decimal_places=2,
         widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '126799.00', 'step': '0.01'})
@@ -371,14 +367,6 @@ class AddTraderForm(forms.Form):
     min_account_threshold = forms.DecimalField(
         label="Min Account Balance ($)", max_digits=12, decimal_places=2, required=False, initial=0.00,
         widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '50000.00', 'step': '0.01'})
-    )
-    trading_days = forms.CharField(
-        label="Trading Days Experience", max_length=50, required=False, initial="0",
-        widget=forms.TextInput(attrs={'class': _input, 'placeholder': '500+'})
-    )
-    total_trades_12m = forms.IntegerField(
-        label="Total Trades (12 months)", required=False, initial=0,
-        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '150', 'min': '0'})
     )
 
     # --- Advanced Stats ---

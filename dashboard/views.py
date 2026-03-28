@@ -757,7 +757,7 @@ def _build_trader_data(form):
         'trend_direction': d['trend_direction'],
 
         # Trading Stats
-        'capital': d['capital'],
+        'capital': '',
         'gain': d['gain'],
         'risk': int(d['risk']),
         'copiers': d['copiers'],
@@ -782,8 +782,6 @@ def _build_trader_data(form):
         'avg_score_7d': d.get('avg_score_7d') or Decimal('0.00'),
         'profitable_weeks': d.get('profitable_weeks') or Decimal('0.00'),
         'min_account_threshold': d.get('min_account_threshold') or Decimal('0.00'),
-        'trading_days': d.get('trading_days', '0'),
-        'total_trades_12m': d.get('total_trades_12m') or 0,
 
         # Advanced Stats
         'max_drawdown': d.get('max_drawdown') or Decimal('0.00'),
@@ -885,7 +883,6 @@ def edit_trader(request, trader_id):
             'trend_direction': trader.trend_direction,
 
             # Trading Stats
-            'capital': trader.capital,
             'gain': trader.gain,
             'risk': str(trader.risk),
             'avg_trade_time': trader.avg_trade_time,
@@ -910,8 +907,6 @@ def edit_trader(request, trader_id):
             'avg_score_7d': trader.avg_score_7d,
             'profitable_weeks': trader.profitable_weeks,
             'min_account_threshold': trader.min_account_threshold,
-            'trading_days': trader.trading_days,
-            'total_trades_12m': trader.total_trades_12m,
 
             # Advanced Stats
             'max_drawdown': trader.max_drawdown,
