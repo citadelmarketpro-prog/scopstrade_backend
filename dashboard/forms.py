@@ -368,6 +368,10 @@ class AddTraderForm(forms.Form):
         label="Min Account Balance ($)", max_digits=12, decimal_places=2, required=False, initial=0.00,
         widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '50000.00', 'step': '0.01'})
     )
+    profit_share = forms.IntegerField(
+        label="Profit Share %", required=False, initial=50,
+        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '50', 'min': '0', 'max': '100'})
+    )
 
     # --- Advanced Stats ---
     max_drawdown = forms.DecimalField(

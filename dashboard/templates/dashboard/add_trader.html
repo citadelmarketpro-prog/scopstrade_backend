@@ -220,6 +220,11 @@
                     {{ form.min_account_threshold }}
                     {% if form.min_account_threshold.errors %}<p class="text-xs text-red-600 mt-1">{{ form.min_account_threshold.errors.0 }}</p>{% endif %}
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1">{{ form.profit_share.label }}</label>
+                    {{ form.profit_share }}
+                    {% if form.profit_share.errors %}<p class="text-xs text-red-600 mt-1">{{ form.profit_share.errors.0 }}</p>{% endif %}
+                </div>
             </div>
 
             <!-- Advanced Stats -->

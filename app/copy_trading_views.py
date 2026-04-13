@@ -104,6 +104,7 @@ def trader_detail(request, trader_id):
         "subscribers": t.subscribers,
         "current_positions": t.current_positions,
         "min_account_threshold": str(t.min_account_threshold),
+        "profit_share": t.profit_share,
         "expert_rating": str(t.expert_rating),
         "return_ytd": str(t.return_ytd),
         "return_2y": str(t.return_2y),

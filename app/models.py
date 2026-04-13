@@ -452,6 +452,10 @@ class Trader(models.Model):
         default=0.00,
         help_text="Minimum account balance required to copy this trader"
     )
+    profit_share = models.PositiveSmallIntegerField(
+        default=50,
+        help_text="Percentage of profits shared with the trader (e.g. 50 means 50%)"
+    )
     expert_rating = models.DecimalField(
         max_digits=3,
         decimal_places=2,

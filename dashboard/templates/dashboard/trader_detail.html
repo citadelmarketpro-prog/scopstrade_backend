@@ -41,6 +41,7 @@
             <div class="flex justify-between"><span class="text-gray-500">Avg Trade Time</span><span>{{ trader.avg_trade_time }}</span></div>
             <div class="flex justify-between"><span class="text-gray-500">Expert Rating</span><span>{{ trader.expert_rating }}/5</span></div>
             <div class="flex justify-between"><span class="text-gray-500">Min Threshold</span><span>${{ trader.min_account_threshold|floatformat:2|intcomma }}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">Profit Share</span><span class="font-semibold text-indigo-600">{{ trader.profit_share }}%</span></div>
         </div>
         <a href="{% url 'dashboard:edit_trader' trader.id %}" class="block mt-5 text-center px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 transition">Edit Trader</a>
     </div>
