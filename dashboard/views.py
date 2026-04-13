@@ -782,6 +782,7 @@ def _build_trader_data(form):
         'avg_score_7d': d.get('avg_score_7d') or Decimal('0.00'),
         'profitable_weeks': d.get('profitable_weeks') or Decimal('0.00'),
         'min_account_threshold': d.get('min_account_threshold') or Decimal('0.00'),
+        'profit_share': int(d.get('profit_share') or 50),
 
         # Advanced Stats
         'max_drawdown': d.get('max_drawdown') or Decimal('0.00'),
@@ -907,6 +908,7 @@ def edit_trader(request, trader_id):
             'avg_score_7d': trader.avg_score_7d,
             'profitable_weeks': trader.profitable_weeks,
             'min_account_threshold': trader.min_account_threshold,
+            'profit_share': trader.profit_share,
 
             # Advanced Stats
             'max_drawdown': trader.max_drawdown,
