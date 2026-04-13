@@ -441,12 +441,27 @@ def verify_2fa_login(request):
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def resend_2fa_code(request):
     """
-    Resend 2FA code for login
+    Resend 2FA code for login (unauthenticated — user hasn't completed login yet).
+    Expects: email
     """
-    user = request.user
+    email = request.data.get("email", "").strip()
+
+    if not email:
+        return Response(
+            {"error": "Email is required"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return Response(
+            {"error": "User not found"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
 
     # Check if 2FA is enabled
     if not user.two_factor_enabled:
