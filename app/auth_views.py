@@ -134,7 +134,7 @@ def register_user_with_verification(request):
             )
 
     try:
-        # Create user (but don't activate yet)
+        # Create user
         user = User.objects.create_user(
             email=email,
             password=password,
@@ -148,30 +148,15 @@ def register_user_with_verification(request):
             currency=currency,
             country_calling_code=country_calling_code,
             referred_by=referrer,
-            email_verified=False,  # NOT VERIFIED YET
-            is_active=True,  # Keep active for login, but check email_verified in frontend
+            email_verified=True,
+            is_active=True,
         )
-
-        # Generate and save verification code
-        verification_code = generate_verification_code()
-        user.verification_code = verification_code
-        user.code_created_at = timezone.now()
-        user.save()
 
         # Send welcome email (non-blocking)
         try:
             send_welcome_email(user)
         except Exception as e:
             print(f"Failed to send welcome email: {e}")
-
-        # Send verification code email (critical)
-        # email_sent = send_verification_code_email(user, verification_code)
-
-        # if not email_sent:
-        #     return Response(
-        #         {"error": "Failed to send verification email. Please try again."},
-        #         status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        #     )
 
         response = Response(
             {
@@ -328,19 +313,6 @@ def login_with_2fa(request):
             {"error": "Invalid email or password"},
             status=status.HTTP_401_UNAUTHORIZED,
         )
-
-    # CHECK: If email not verified, set cookie but flag it
-    if not user.email_verified:
-        response = Response(
-            {
-                "error": "Please verify your email before logging in",
-                "email_verified": False,
-                "requires_verification": True,
-            },
-            status=status.HTTP_403_FORBIDDEN,
-        )
-        set_auth_cookies(response, user)
-        return response
 
     # Check if 2FA is enabled for this user
     if user.two_factor_enabled:

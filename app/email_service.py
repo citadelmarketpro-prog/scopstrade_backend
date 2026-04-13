@@ -283,7 +283,7 @@ def send_welcome_email(user):
                 </div>
 
                 <div class="text">
-                    Once verified, you'll have access to copy trading, premium signals, and our full suite of trading instruments including stocks, forex, and commodities.
+                    Once that is done, you'll have access to copy trading, premium signals, and our full suite of trading instruments including stocks, forex, and commodities.
                 </div>
 
                 <div class="divider"></div>
