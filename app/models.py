@@ -717,6 +717,14 @@ class UserCopyTraderHistory(models.Model):
         blank=True,
         help_text="Investment amount for user-direct trades (used for P/L calculation)"
     )
+
+    custom_image = CloudinaryField(
+        "custom_image",
+        folder="trade_images",
+        blank=True,
+        null=True,
+        help_text="Custom image for this trade (shown instead of the default market icon)",
+    )
     
     
     # Trade Details

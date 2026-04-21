@@ -36,21 +36,16 @@
     </div>
 </div>
 
-<!-- Form: search + bulk submit -->
-<form method="get" action="" class="mb-4 flex flex-col sm:flex-row gap-3">
-    <input type="text" name="q" value="{{ search }}" placeholder="Search by email, first name, last name…"
-        class="flex-1 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-    <button type="submit"
-        class="px-5 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-500 transition">
-        Search
-    </button>
-    {% if search %}
-    <a href="{% url 'dashboard:users_trade_list' %}"
-        class="px-5 py-2 bg-gray-100 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-200 transition text-center">
+<!-- Client-side search -->
+<div class="mb-4 flex flex-col sm:flex-row gap-3">
+    <input type="text" id="user-search" placeholder="Search by email, first name, last name…"
+        class="flex-1 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        oninput="filterUsers(this.value)">
+    <button type="button" onclick="document.getElementById('user-search').value=''; filterUsers('');"
+        class="px-5 py-2 bg-gray-100 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-200 transition">
         Clear
-    </a>
-    {% endif %}
-</form>
+    </button>
+</div>
 
 <!-- Users table with bulk-select -->
 <form method="post" action="{% url 'dashboard:bulk_add_user_trade' %}" id="bulk-form">
@@ -86,7 +81,7 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     {% for u in users %}
-                    <tr class="hover:bg-gray-50 transition">
+                    <tr class="user-row hover:bg-gray-50 transition" data-search="{{ u.email|lower }} {{ u.first_name|lower }} {{ u.last_name|lower }}">
                         <td class="px-5 py-3">
                             <input type="checkbox" name="user_ids" value="{{ u.id }}"
                                 class="user-checkbox w-4 h-4 rounded text-indigo-600"
@@ -114,13 +109,21 @@
                         </td>
                     </tr>
                     {% empty %}
-                    <tr>
+                    <tr id="no-users-row">
                         <td colspan="5" class="px-5 py-10 text-center text-gray-400">
                             <i class="fas fa-users text-2xl mb-2 block"></i>
-                            No users found{% if search %} matching "{{ search }}"{% endif %}
+                            No users found.
                         </td>
                     </tr>
                     {% endfor %}
+                    {% if users %}
+                    <tr id="no-filter-empty" style="display:none">
+                        <td colspan="5" class="px-5 py-10 text-center text-gray-400">
+                            <i class="fas fa-search text-2xl mb-2 block"></i>
+                            No users match your search.
+                        </td>
+                    </tr>
+                    {% endif %}
                 </tbody>
             </table>
         </div>
@@ -129,13 +132,28 @@
 
 <script>
 function toggleAll(masterCb) {
-    document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = masterCb.checked);
+    document.querySelectorAll('.user-row:not([style*="display: none"]) .user-checkbox').forEach(cb => cb.checked = masterCb.checked);
     updateBulkBtn();
 }
 function updateBulkBtn() {
     const checked = document.querySelectorAll('.user-checkbox:checked').length;
     document.getElementById('selected-count').textContent = `(${checked} selected)`;
     document.getElementById('bulk-btn').disabled = checked === 0;
+}
+function filterUsers(query) {
+    const q = query.toLowerCase().trim();
+    const rows = document.querySelectorAll('.user-row');
+    let visible = 0;
+    rows.forEach(row => {
+        const match = !q || row.dataset.search.includes(q);
+        row.style.display = match ? '' : 'none';
+        if (match) visible++;
+    });
+    const empty = document.getElementById('no-filter-empty');
+    if (empty) empty.style.display = visible === 0 ? '' : 'none';
+    // Uncheck master checkbox when filter changes
+    document.getElementById('select-all').checked = false;
+    updateBulkBtn();
 }
 </script>
 

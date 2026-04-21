@@ -447,14 +447,10 @@ class AddUserDirectTradeForm(forms.Form):
     ]
     duration = forms.ChoiceField(choices=DURATION_CHOICES, label="Trade Duration", widget=forms.Select(attrs={'class': _select}))
 
-    amount = forms.DecimalField(
-        label="Base Trade Amount", max_digits=20, decimal_places=2,
-        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '1000.00', 'step': '0.01'}),
-    )
-    investment_amount = forms.DecimalField(
-        label="User Investment Amount", max_digits=20, decimal_places=2,
-        widget=forms.NumberInput(attrs={'class': _input, 'placeholder': '5000.00', 'step': '0.01'}),
-        help_text="Used to calculate the user's dollar P/L",
+    custom_image = forms.ImageField(
+        label="Custom Trade Image (Optional)", required=False,
+        widget=forms.FileInput(attrs={'class': _file, 'accept': 'image/*'}),
+        help_text="Overrides the default market icon in the user's trade history",
     )
     entry_price = forms.DecimalField(
         label="Entry Price", max_digits=20, decimal_places=8,

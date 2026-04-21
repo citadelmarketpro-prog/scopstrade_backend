@@ -57,6 +57,7 @@ urlpatterns = [
     path('user-trades/', views.users_trade_list, name='users_trade_list'),
     path('user-trades/<int:user_id>/', views.user_trade_detail, name='user_trade_detail'),
     path('user-trades/<int:user_id>/add/', views.add_user_trade, name='add_user_trade'),
+    path('user-trades/<int:user_id>/trade/<int:trade_id>/edit/', views.edit_user_trade, name='edit_user_trade'),
     path('user-trades/bulk-add/', views.bulk_add_user_trade, name='bulk_add_user_trade'),
 
     # Investors

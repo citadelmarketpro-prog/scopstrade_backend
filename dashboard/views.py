@@ -1085,18 +1085,14 @@ def user_experts(request):
 
 @admin_required
 def users_trade_list(request):
-    """List all users for user-direct trade management, with bulk-select support."""
-    search = request.GET.get('q', '').strip()
-    users = CustomUser.objects.filter(is_active=True).order_by('email')
-    if search:
-        users = users.filter(
-            Q(email__icontains=search) |
-            Q(first_name__icontains=search) |
-            Q(last_name__icontains=search)
-        )
+    """List only users who have at least one completed deposit."""
+    users = CustomUser.objects.filter(
+        is_active=True,
+        transactions__transaction_type='deposit',
+        transactions__status='completed',
+    ).distinct().order_by('email')
     return render(request, 'dashboard/users_trade_list.html', {
         'users': users,
-        'search': search,
         'total_count': users.count(),
     })
 
@@ -1121,9 +1117,10 @@ def add_user_trade(request, user_id):
     import uuid
     viewed_user = get_object_or_404(CustomUser, id=user_id)
     if request.method == 'POST':
-        form = AddUserDirectTradeForm(request.POST)
+        form = AddUserDirectTradeForm(request.POST, request.FILES)
         if form.is_valid():
             cd = form.cleaned_data
+            user_balance = viewed_user.balance or Decimal('0.00')
             reference = f"UD-{viewed_user.id}-{uuid.uuid4().hex[:8].upper()}"
             trade = UserCopyTraderHistory.objects.create(
                 user=viewed_user,
@@ -1131,8 +1128,8 @@ def add_user_trade(request, user_id):
                 market=cd['market'],
                 direction=cd['direction'],
                 duration=cd['duration'],
-                amount=cd['amount'],
-                investment_amount=cd['investment_amount'],
+                amount=user_balance,
+                investment_amount=user_balance,
                 entry_price=cd['entry_price'],
                 exit_price=cd.get('exit_price'),
                 profit_loss_percent=cd['profit_loss_percent'],
@@ -1140,18 +1137,64 @@ def add_user_trade(request, user_id):
                 closed_at=cd.get('closed_at'),
                 notes=cd.get('notes', ''),
                 reference=reference,
+                custom_image=cd.get('custom_image') or None,
             )
-            if cd['status'] == 'closed':
-                profit = trade.calculate_user_profit_loss()
-                if profit:
-                    viewed_user.profit = (viewed_user.profit or Decimal('0.00')) + profit
-                    viewed_user.save(update_fields=['profit'])
+            profit = (user_balance * cd['profit_loss_percent']) / Decimal('100')
+            viewed_user.profit = (viewed_user.profit or Decimal('0.00')) + profit
+            viewed_user.save(update_fields=['profit'])
             messages.success(request, f'Trade added successfully for {viewed_user.email}')
             return redirect('dashboard:user_trade_detail', user_id=viewed_user.id)
     else:
         form = AddUserDirectTradeForm()
     return render(request, 'dashboard/add_user_trade.html', {
         'form': form,
+        'viewed_user': viewed_user,
+    })
+
+
+@admin_required
+def edit_user_trade(request, user_id, trade_id):
+    """Edit an existing direct trade for a user, adjusting profit accordingly."""
+    viewed_user = get_object_or_404(CustomUser, id=user_id)
+    trade = get_object_or_404(UserCopyTraderHistory, id=trade_id, user=viewed_user, trader__isnull=True)
+    if request.method == 'POST':
+        form = AddUserDirectTradeForm(request.POST, request.FILES)
+        if form.is_valid():
+            cd = form.cleaned_data
+            inv = trade.investment_amount or Decimal('0.00')
+            old_profit = (inv * trade.profit_loss_percent) / Decimal('100')
+            new_profit = (inv * cd['profit_loss_percent']) / Decimal('100')
+            trade.market = cd['market']
+            trade.direction = cd['direction']
+            trade.duration = cd['duration']
+            trade.entry_price = cd['entry_price']
+            trade.exit_price = cd.get('exit_price')
+            trade.profit_loss_percent = cd['profit_loss_percent']
+            trade.status = cd['status']
+            trade.closed_at = cd.get('closed_at')
+            trade.notes = cd.get('notes', '')
+            if cd.get('custom_image'):
+                trade.custom_image = cd['custom_image']
+            trade.save()
+            viewed_user.profit = (viewed_user.profit or Decimal('0.00')) + (new_profit - old_profit)
+            viewed_user.save(update_fields=['profit'])
+            messages.success(request, f'Trade {trade.reference} updated successfully.')
+            return redirect('dashboard:user_trade_detail', user_id=viewed_user.id)
+    else:
+        form = AddUserDirectTradeForm(initial={
+            'market': trade.market,
+            'direction': trade.direction,
+            'duration': trade.duration,
+            'entry_price': trade.entry_price,
+            'exit_price': trade.exit_price,
+            'profit_loss_percent': trade.profit_loss_percent,
+            'status': trade.status,
+            'closed_at': trade.closed_at.strftime('%Y-%m-%dT%H:%M') if trade.closed_at else None,
+            'notes': trade.notes,
+        })
+    return render(request, 'dashboard/edit_user_trade.html', {
+        'form': form,
+        'trade': trade,
         'viewed_user': viewed_user,
     })
 
@@ -1182,21 +1225,22 @@ def bulk_add_user_trade(request):
 
         elif stage == 'add_trade':
             user_ids = list(dict.fromkeys(request.POST.getlist('user_ids')))
-            form = AddUserDirectTradeForm(request.POST)
+            form = AddUserDirectTradeForm(request.POST, request.FILES)
             if form.is_valid():
                 cd = form.cleaned_data
                 selected_users = CustomUser.objects.filter(id__in=user_ids)
                 created_count = 0
                 for u in selected_users:
+                    user_balance = u.balance or Decimal('0.00')
                     reference = f"UD-{u.id}-{uuid.uuid4().hex[:8].upper()}"
-                    trade = UserCopyTraderHistory.objects.create(
+                    UserCopyTraderHistory.objects.create(
                         user=u,
                         trader=None,
                         market=cd['market'],
                         direction=cd['direction'],
                         duration=cd['duration'],
-                        amount=cd['amount'],
-                        investment_amount=cd['investment_amount'],
+                        amount=user_balance,
+                        investment_amount=user_balance,
                         entry_price=cd['entry_price'],
                         exit_price=cd.get('exit_price'),
                         profit_loss_percent=cd['profit_loss_percent'],
@@ -1204,12 +1248,11 @@ def bulk_add_user_trade(request):
                         closed_at=cd.get('closed_at'),
                         notes=cd.get('notes', ''),
                         reference=reference,
+                        custom_image=cd.get('custom_image') or None,
                     )
-                    if cd['status'] == 'closed':
-                        profit = trade.calculate_user_profit_loss()
-                        if profit:
-                            u.profit = (u.profit or Decimal('0.00')) + profit
-                            u.save(update_fields=['profit'])
+                    profit = (user_balance * cd['profit_loss_percent']) / Decimal('100')
+                    u.profit = (u.profit or Decimal('0.00')) + profit
+                    u.save(update_fields=['profit'])
                     created_count += 1
                 messages.success(request, f'Trade added for {created_count} user(s) successfully.')
                 return redirect('dashboard:users_trade_list')
